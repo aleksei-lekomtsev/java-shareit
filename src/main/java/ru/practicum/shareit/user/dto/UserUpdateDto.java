@@ -1,10 +1,10 @@
-package ru.practicum.shareit.user;
+package ru.practicum.shareit.user.dto;
 
 import lombok.Data;
 
 
 @Data
-public class User {
+public class UserUpdateDto {
     private Integer id;
 
     private String name;
