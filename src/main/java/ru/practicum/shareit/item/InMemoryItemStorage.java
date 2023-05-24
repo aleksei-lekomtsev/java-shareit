@@ -17,12 +17,16 @@ public class InMemoryItemStorage implements ItemStorage {
     private static Integer            id    = 0;
     private final  Map<Integer, Item> items = new HashMap<>();
 
-    @Override
-    public Item create(Item entity) {
+    private static void checkForNull(Item entity) {
         if (entity == null) {
             log.warn("Произошла непредвиденная ошибка. Значение entity не может быть null");
             throw new RuntimeException("Произошла непредвиденная ошибка. Значение entity не может быть null");
         }
+    }
+
+    @Override
+    public Item create(Item entity) {
+        checkForNull(entity);
         entity.setId(++id);
         items.put(entity.getId(), entity);
         return entity;
@@ -30,10 +34,7 @@ public class InMemoryItemStorage implements ItemStorage {
 
     @Override
     public Item update(Item entity) {
-        if (entity == null) {
-            log.error("Произошла непредвиденная ошибка. Значение entity не может быть null");
-            throw new RuntimeException("Произошла непредвиденная ошибка. Значение entity не может быть null");
-        }
+        checkForNull(entity);
         if (!items.containsKey(entity.getId())) {
             log.error("Вещь с id: " + entity.getId() + " не найдена.");
             throw new EntityNotFoundException(Item.class, "Вещь с id: " + id + " не найдена.");

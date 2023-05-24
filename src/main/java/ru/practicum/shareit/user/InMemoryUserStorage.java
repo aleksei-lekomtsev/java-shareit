@@ -23,27 +23,28 @@ public class InMemoryUserStorage implements UserStorage {
                         !Objects.equals(u.getId(), user.getId()));
     }
 
+    private static void checkForNull(User entity) {
+        if (entity == null) {
+            log.warn("Произошла непредвиденная ошибка. Значение entity не может быть null");
+            throw new RuntimeException("Произошла непредвиденная ошибка. Значение entity не может быть null");
+        }
+    }
+
     @Override
-    public User create(User user) {
-        if (user == null) {
-            log.warn("Произошла непредвиденная ошибка. Значение user не может быть null");
-            throw new RuntimeException("Произошла непредвиденная ошибка. Значение user не может быть null");
+    public User create(User entity) {
+        checkForNull(entity);
+        if (doesEmailExist(entity)) {
+            log.error("Пользователь с email: " + entity.getEmail() + " уже существует");
+            throw new RuntimeException("Пользователь с email: " + entity.getEmail() + " уже существует");
         }
-        if (doesEmailExist(user)) {
-            log.error("Пользователь с email: " + user.getEmail() + " уже существует");
-            throw new RuntimeException("Пользователь с email: " + user.getEmail() + " уже существует");
-        }
-        user.setId(++id);
-        users.put(user.getId(), user);
-        return user;
+        entity.setId(++id);
+        users.put(entity.getId(), entity);
+        return entity;
     }
 
     @Override
     public User update(User entity) {
-        if (entity == null) {
-            log.error("Произошла непредвиденная ошибка. Значение entity не может быть null");
-            throw new RuntimeException("Произошла непредвиденная ошибка. Значение entity не может быть null");
-        }
+        checkForNull(entity);
         if (!users.containsKey(entity.getId())) {
             log.error("Пользователь с id: " + entity.getId() + " не найден.");
             throw new EntityNotFoundException(User.class, "Пользователь с id: " + id + " не найден.");

@@ -2,6 +2,7 @@ package ru.practicum.shareit.item;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -13,10 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import ru.practicum.shareit.item.dto.ItemCreateDto;
-import ru.practicum.shareit.item.dto.ItemUpdateDto;
+import ru.practicum.shareit.item.dto.ItemDto;
 
-import javax.validation.Valid;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -29,7 +28,7 @@ public class ItemController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public Collection<ItemCreateDto> getItems(@RequestHeader("X-Sharer-User-Id") Integer userId) {
+    public Collection<ItemDto> getItems(@RequestHeader("X-Sharer-User-Id") Integer userId) {
         return itemService
                 .findAll(userId)
                 .stream()
@@ -39,16 +38,16 @@ public class ItemController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ItemCreateDto createItem(@RequestHeader("X-Sharer-User-Id") Integer userId,
-                                    @RequestBody @Valid ItemCreateDto itemCreateDto) {
-        itemCreateDto.setOwnerId(userId);
-        return ItemMapper.toItemDto(itemService.create(ItemMapper.toItem(itemCreateDto)));
+    public ItemDto createItem(@RequestHeader("X-Sharer-User-Id") Integer userId,
+                              @RequestBody @Validated(ItemBasicInfo.class) ItemDto itemDto) {
+        itemDto.setOwnerId(userId);
+        return ItemMapper.toItemDto(itemService.create(ItemMapper.toItem(itemDto)));
     }
 
     @PatchMapping("/{itemId}")
     @ResponseStatus(HttpStatus.OK)
-    public ItemCreateDto updateItem(@RequestHeader("X-Sharer-User-Id") Integer userId,
-                                    @RequestBody ItemUpdateDto itemDto, @PathVariable Integer itemId) {
+    public ItemDto updateItem(@RequestHeader("X-Sharer-User-Id") Integer userId,
+                              @RequestBody ItemDto itemDto, @PathVariable Integer itemId) {
         itemDto.setId(itemId);
         itemDto.setOwnerId(userId);
         return ItemMapper.toItemDto(itemService.update(ItemMapper.toItem(itemDto)));
@@ -56,7 +55,7 @@ public class ItemController {
 
     @GetMapping("/{itemId}")
     @ResponseStatus(HttpStatus.OK)
-    public ItemCreateDto getItemById(@RequestHeader("X-Sharer-User-Id") Integer userId, @PathVariable Integer itemId) {
+    public ItemDto getItemById(@RequestHeader("X-Sharer-User-Id") Integer userId, @PathVariable Integer itemId) {
         return ItemMapper.toItemDto(itemService.findById(itemId));
     }
 
@@ -69,7 +68,7 @@ public class ItemController {
 
     @GetMapping("/search")
     @ResponseStatus(HttpStatus.OK)
-    public Collection<ItemCreateDto> search(@RequestParam(name = "text", required = false) String text) {
+    public Collection<ItemDto> search(@RequestParam(name = "text", required = false) String text) {
         return itemService
                 .search(text)
                 .stream()

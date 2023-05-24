@@ -2,6 +2,7 @@ package ru.practicum.shareit.user;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -11,10 +12,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import ru.practicum.shareit.user.dto.UserCreateDto;
-import ru.practicum.shareit.user.dto.UserUpdateDto;
+import ru.practicum.shareit.user.dto.UserDto;
 
-import javax.validation.Valid;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
@@ -27,7 +26,7 @@ public class UserController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public Collection<UserCreateDto> getUsers() {
+    public Collection<UserDto> getUsers() {
         return userService
                 .findAll()
                 .stream()
@@ -37,20 +36,21 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserCreateDto createUser(@RequestBody @Valid UserCreateDto user) {
-        return UserMapper.toUserDto(userService.create(UserMapper.toUser(user)));
+    public UserDto createUser(@RequestBody @Validated(UserCreateBasicInfo.class) UserDto userDto) {
+        return UserMapper.toUserDto(userService.create(UserMapper.toUser(userDto)));
     }
 
     @PatchMapping("/{userId}")
     @ResponseStatus(HttpStatus.OK)
-    public UserCreateDto updateUser(@PathVariable Integer userId, @RequestBody UserUpdateDto user) {
-        user.setId(userId);
-        return UserMapper.toUserDto(userService.update(UserMapper.toUser(user)));
+    public UserDto updateUser(@PathVariable Integer userId,
+                              @RequestBody @Validated(UserUpdateBasicInfo.class) UserDto userDto) {
+        userDto.setId(userId);
+        return UserMapper.toUserDto(userService.update(UserMapper.toUser(userDto)));
     }
 
     @GetMapping("/{userId}")
     @ResponseStatus(HttpStatus.OK)
-    public UserCreateDto getUserById(@PathVariable Integer userId) {
+    public UserDto getUserById(@PathVariable Integer userId) {
         return UserMapper.toUserDto(userService.findById(userId));
     }
 
