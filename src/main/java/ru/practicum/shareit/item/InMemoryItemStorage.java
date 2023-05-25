@@ -11,18 +11,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static ru.practicum.shareit.util.Util.checkForNull;
+
 @Component
 @Slf4j
 public class InMemoryItemStorage implements ItemStorage {
     private static Integer            id    = 0;
     private final  Map<Integer, Item> items = new HashMap<>();
-
-    private static void checkForNull(Item entity) {
-        if (entity == null) {
-            log.warn("Произошла непредвиденная ошибка. Значение entity не может быть null");
-            throw new RuntimeException("Произошла непредвиденная ошибка. Значение entity не может быть null");
-        }
-    }
 
     @Override
     public Item create(Item entity) {

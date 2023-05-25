@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import static ru.practicum.shareit.util.Util.checkForNull;
+
 @Component
 @Slf4j
 public class InMemoryUserStorage implements UserStorage {
@@ -21,13 +23,6 @@ public class InMemoryUserStorage implements UserStorage {
                 .values()
                 .stream().anyMatch(u -> u.getEmail().equalsIgnoreCase(user.getEmail()) &&
                         !Objects.equals(u.getId(), user.getId()));
-    }
-
-    private static void checkForNull(User entity) {
-        if (entity == null) {
-            log.warn("Произошла непредвиденная ошибка. Значение entity не может быть null");
-            throw new RuntimeException("Произошла непредвиденная ошибка. Значение entity не может быть null");
-        }
     }
 
     @Override

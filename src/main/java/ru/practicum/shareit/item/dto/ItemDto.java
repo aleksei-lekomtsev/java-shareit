@@ -5,7 +5,6 @@ import lombok.Data;
 import ru.practicum.shareit.item.ItemBasicInfo;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 @Data
@@ -17,7 +16,8 @@ public class ItemDto {
             groups = ItemBasicInfo.class)
     private String name;
 
-    @NotEmpty(message = "Description must not be empty.", groups = ItemBasicInfo.class)
+    @NotBlank(message = "Description  must not be null and must contain at least one non-whitespace character.",
+            groups = ItemBasicInfo.class)
     private String description;
 
     @NotNull(groups = ItemBasicInfo.class)
