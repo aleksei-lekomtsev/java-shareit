@@ -42,7 +42,7 @@ public class UserController {
 
     @PatchMapping("/{userId}")
     @ResponseStatus(HttpStatus.OK)
-    public UserDto updateUser(@PathVariable Integer userId,
+    public UserDto updateUser(@PathVariable Long userId,
                               @RequestBody @Validated(UserUpdateBasicInfo.class) UserDto userDto) {
         userDto.setId(userId);
         return UserMapper.toUserDto(userService.update(UserMapper.toUser(userDto)));
@@ -50,13 +50,13 @@ public class UserController {
 
     @GetMapping("/{userId}")
     @ResponseStatus(HttpStatus.OK)
-    public UserDto getUserById(@PathVariable Integer userId) {
+    public UserDto getUserById(@PathVariable Long userId) {
         return UserMapper.toUserDto(userService.findById(userId));
     }
 
     @DeleteMapping("/{userId}")
     @ResponseStatus(HttpStatus.OK)
-    public void deleteUser(@PathVariable Integer userId) {
+    public void deleteUser(@PathVariable Long userId) {
         userService.delete(userId);
     }
 }

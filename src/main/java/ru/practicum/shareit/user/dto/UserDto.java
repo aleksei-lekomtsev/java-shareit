@@ -11,7 +11,7 @@ import javax.validation.constraints.NotBlank;
 @Data
 @AllArgsConstructor
 public class UserDto {
-    private Integer id;
+    private Long id;
 
     @NotBlank(message = "Name must not be null and must contain at least one non-whitespace character.",
             groups = UserCreateBasicInfo.class)

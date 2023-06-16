@@ -20,6 +20,13 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleBadInputDataException(final BadInputDataException e) {
+        log.warn("BadInputDataException: " + e.getMessage() + " HTTP-code: " + HttpStatus.BAD_REQUEST);
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleEntityNotFoundException(final EntityNotFoundException e) {
         log.warn("EntityNotFoundException: " + e.getMessage() + " HTTP-code: " + HttpStatus.NOT_FOUND);
@@ -31,5 +38,12 @@ public class ErrorHandler {
     public ErrorResponse handleThrowable(final Throwable e) {
         log.warn("Throwable: " + e.getMessage() + " HTTP-code: " + HttpStatus.INTERNAL_SERVER_ERROR);
         return new ErrorResponse("Произошла непредвиденная ошибка.");
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleIllegalArgumentException(final IllegalArgumentException e) {
+        log.warn("Throwable: " + e.getMessage() + " HTTP-code: " + HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ErrorResponse("Unknown state: UNSUPPORTED_STATUS");
     }
 }

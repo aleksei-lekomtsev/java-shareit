@@ -24,55 +24,56 @@ import java.util.stream.Collectors;
 @RequestMapping("/items")
 @RequiredArgsConstructor
 public class ItemController {
-    private final ItemServiceImpl itemService;
+    private final ItemServiceImpl service;
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public Collection<ItemDto> getItems(@RequestHeader("X-Sharer-User-Id") Integer userId) {
-        return itemService
-                .findAll(userId)
-                .stream()
-                .map(ItemMapper::toItemDto)
-                .collect(Collectors.toList());
+    public Collection<ItemDto> getItems(@RequestHeader("X-Sharer-User-Id") Long userId) {
+        return service.findAll(userId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ItemDto createItem(@RequestHeader("X-Sharer-User-Id") Integer userId,
+    public ItemDto createItem(@RequestHeader("X-Sharer-User-Id") Long userId,
                               @RequestBody @Validated(ItemBasicInfo.class) ItemDto itemDto) {
-        itemDto.setOwnerId(userId);
-        return ItemMapper.toItemDto(itemService.create(ItemMapper.toItem(itemDto)));
+        return ItemMapper.toItemDto(service.create(userId, itemDto), null, null, null);
     }
 
     @PatchMapping("/{itemId}")
     @ResponseStatus(HttpStatus.OK)
-    public ItemDto updateItem(@RequestHeader("X-Sharer-User-Id") Integer userId,
-                              @RequestBody ItemDto itemDto, @PathVariable Integer itemId) {
+    public ItemDto updateItem(@RequestHeader("X-Sharer-User-Id") Long userId,
+                              @RequestBody ItemDto itemDto, @PathVariable Long itemId) {
         itemDto.setId(itemId);
-        itemDto.setOwnerId(userId);
-        return ItemMapper.toItemDto(itemService.update(ItemMapper.toItem(itemDto)));
+        return ItemMapper.toItemDto(service.update(userId, itemDto), null, null, null);
     }
 
     @GetMapping("/{itemId}")
     @ResponseStatus(HttpStatus.OK)
-    public ItemDto getItemById(@RequestHeader("X-Sharer-User-Id") Integer userId, @PathVariable Integer itemId) {
-        return ItemMapper.toItemDto(itemService.findById(itemId));
+    public ItemDto getItemById(@RequestHeader("X-Sharer-User-Id") Long userId, @PathVariable Long itemId) {
+        return service.findById(userId, itemId);
     }
-
 
     @DeleteMapping("/{itemId}")
     @ResponseStatus(HttpStatus.OK)
-    public void deleteItem(@PathVariable Integer itemId) {
-        itemService.delete(itemId);
+    public void deleteItem(@PathVariable Long itemId) {
+        service.delete(itemId);
     }
 
     @GetMapping("/search")
     @ResponseStatus(HttpStatus.OK)
     public Collection<ItemDto> search(@RequestParam(name = "text", required = false) String text) {
-        return itemService
+        return service
                 .search(text)
                 .stream()
-                .map(ItemMapper::toItemDto)
+                .map(i -> ItemMapper.toItemDto(i, null, null, null))
                 .collect(Collectors.toList());
+    }
+
+    @PostMapping("/{itemId}/comment")
+    @ResponseStatus(HttpStatus.OK)
+    public CommentDto createComment(@RequestHeader("X-Sharer-User-Id") Long userId,
+                                    @PathVariable Long itemId,
+                                    @RequestBody @Validated(CommentBasicInfo.class) CommentDto dto) {
+        return service.create(userId, itemId, dto);
     }
 }
