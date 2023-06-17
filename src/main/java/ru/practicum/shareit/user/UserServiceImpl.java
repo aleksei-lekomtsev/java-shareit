@@ -4,8 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.EntityNotFoundException;
+import ru.practicum.shareit.user.dto.UserDto;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 import static ru.practicum.shareit.util.Util.checkForNull;
 
@@ -21,20 +23,26 @@ public class UserServiceImpl {
                 .isEmpty();
     }
 
-    public Collection<User> findAll() {
-        return repository.findAll();
+    public Collection<UserDto> findAll() {
+        return repository
+                .findAll()
+                .stream()
+                .map(UserMapper::toUserDto)
+                .collect(Collectors.toList());
     }
 
-    public User create(User entity) {
+    public UserDto create(UserDto dto) {
+        User entity = UserMapper.toUser(dto);
         checkForNull(entity);
         if (doesEmailExist(entity)) {
             log.error("Пользователь с email: " + entity.getEmail() + " уже существует");
             throw new RuntimeException("Пользователь с email: " + entity.getEmail() + " уже существует");
         }
-        return repository.save(entity);
+        return UserMapper.toUserDto(repository.save(entity));
     }
 
-    public User update(User entity) {
+    public UserDto update(UserDto dto) {
+        User entity = UserMapper.toUser(dto);
         checkForNull(entity);
         User user = repository.findById(entity.getId()).orElseThrow(
                 () -> {
@@ -45,21 +53,28 @@ public class UserServiceImpl {
             log.error("Пользователь с email: " + entity.getEmail() + " уже существует");
             throw new RuntimeException("Пользователь с email: " + entity.getEmail() + " уже существует");
         }
+
+        // > Проверки точно нужны?
+        // Если я правильно все понимаю...
+        // Когда происходит update в UserDto entity может прийти новый description
+        // а старый name не прийти, т.е. в базе должен обновиться description, а name остаться старый
+        // Подобной проверкой я это учитываю и беру из Entity(user) старое значение name, чтобы
+        // при вызове save метода UserRepository класса поля объекта аргумента для save были заполнены
         if (entity.getName() == null) {
             entity.setName(user.getName());
         }
         if (entity.getEmail() == null) {
             entity.setEmail(user.getEmail());
         }
-        return repository.save(entity);
+        return UserMapper.toUserDto(repository.save(entity));
     }
 
-    public User findById(Long id) {
-        return repository.findById(id).orElseThrow(
+    public UserDto findById(Long id) {
+        return UserMapper.toUserDto(repository.findById(id).orElseThrow(
                 () -> {
                     log.warn("User with id={} not exist", id);
                     throw new EntityNotFoundException(User.class, "Пользователь с id=" + id + " не существует.");
-                });
+                }));
     }
 
     public void delete(Long id) {

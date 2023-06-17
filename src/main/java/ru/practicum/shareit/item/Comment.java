@@ -12,6 +12,8 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 
 @Data
@@ -25,7 +27,8 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column
+    @NotBlank
     private String text;
 
     @ManyToOne
@@ -35,6 +38,7 @@ public class Comment {
     @Column(name = "author_name")
     private String authorName;
 
-    @Column(nullable = false)
+    @Column
+    @NotNull
     private Long created;
 }

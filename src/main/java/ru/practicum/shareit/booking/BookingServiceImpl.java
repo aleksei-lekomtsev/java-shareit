@@ -13,7 +13,9 @@ import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.stream.Collectors;
 
 import static ru.practicum.shareit.booking.Status.APPROVED;
 import static ru.practicum.shareit.booking.Status.REJECTED;
@@ -27,7 +29,7 @@ public class BookingServiceImpl {
     private final UserRepository    userRepository;
     private final ItemRepository    itemRepository;
 
-    public Booking create(Long userId, BookingDto entity) {
+    public BookingDto create(Long userId, BookingDto entity) {
         checkForNull(entity);
 
         if (entity.getStart().isEqual(entity.getEnd()) || entity.getStart().isAfter(entity.getEnd())) {
@@ -49,10 +51,10 @@ public class BookingServiceImpl {
             throw new BadInputDataException("Произошла непредвиденная ошибка.");
         }
 
-        return bookingRepository.save(BookingMapper.toBooking(entity, item, user, Status.WAITING));
+        return BookingMapper.toDto(bookingRepository.save(BookingMapper.toBooking(entity, item, user, Status.WAITING)));
     }
 
-    public Booking update(Long userId, Long bookingId, Boolean approved) {
+    public BookingDto update(Long userId, Long bookingId, Boolean approved) {
         Booking booking = bookingRepository.findByItemOwnerIdAndId(userId, bookingId);
 
         if (booking == null) {
@@ -64,10 +66,10 @@ public class BookingServiceImpl {
         }
 
         booking.setStatus(approved ? APPROVED : REJECTED);
-        return bookingRepository.save(booking);
+        return BookingMapper.toDto(bookingRepository.save(booking));
     }
 
-    public Booking findById(Long userId, Long id) {
+    public BookingDto findById(Long userId, Long id) {
         userRepository.findById(userId).orElseThrow(
                 () -> {
                     log.warn("User with id={} not exist", userId);
@@ -77,58 +79,80 @@ public class BookingServiceImpl {
         if (result == null) {
             throw new EntityNotFoundException(Booking.class, "Entity with id=" + id + " doesn't exist.");
         }
-        return result;
+        return BookingMapper.toDto(result);
     }
 
-    public Collection<Booking> findAll(Long bookerId, String state) {
+    public Collection<BookingDto> findAll(Long bookerId, String state) {
         User user = userRepository.findById(bookerId).orElseThrow(
                 () -> {
                     log.warn("User with id={} not exist", bookerId);
                     throw new EntityNotFoundException(User.class, "Пользователь с id=" + bookerId + " не существует.");
                 });
 
+        Collection<Booking> result = new ArrayList<>();
+
         switch (State.valueOf(state)) {
             case ALL:
-                return bookingRepository.findByBookerOrderByStartDesc(user);
+                result = bookingRepository.findByBookerOrderByStartDesc(user);
+                break;
             case FUTURE:
-                return bookingRepository.findByBookerAndStartAfterOrderByStartDesc(user, LocalDateTime.now());
+                result = bookingRepository.findByBookerAndStartAfterOrderByStartDesc(user, LocalDateTime.now());
+                break;
             case WAITING:
-                return bookingRepository.findByBookerAndStatusOrderByStartDesc(user, Status.WAITING);
+                result = bookingRepository.findByBookerAndStatusOrderByStartDesc(user, Status.WAITING);
+                break;
             case REJECTED:
-                return bookingRepository.findByBookerAndStatusOrderByStartDesc(user, REJECTED);
+                result = bookingRepository.findByBookerAndStatusOrderByStartDesc(user, REJECTED);
+                break;
             case CURRENT:
-                return bookingRepository.findByBookerAndStartBeforeAndEndAfterOrderByStartDesc(user,
+                result = bookingRepository.findByBookerAndStartBeforeAndEndAfterOrderByStartDesc(user,
                         LocalDateTime.now(), LocalDateTime.now());
+                break;
             case PAST:
-                return bookingRepository.findByBookerAndEndBeforeOrderByStartDesc(user, LocalDateTime.now());
-            default:
-                throw new RuntimeException("Unexpected state was received");
+                result = bookingRepository.findByBookerAndEndBeforeOrderByStartDesc(user, LocalDateTime.now());
+                break;
         }
+
+        return result
+                .stream()
+                .map(BookingMapper::toDto)
+                .collect(Collectors.toList());
     }
 
-    public Collection<Booking> findAllForOwner(Long ownerId, String state) {
+    public Collection<BookingDto> findAllForOwner(Long ownerId, String state) {
         User user = userRepository.findById(ownerId).orElseThrow(
                 () -> {
                     log.warn("User with id={} not exist", ownerId);
                     throw new EntityNotFoundException(User.class, "Пользователь с id=" + ownerId + " не существует.");
                 });
+
+        Collection<Booking> result = new ArrayList<>();
+
         switch (State.valueOf(state)) {
             case ALL:
-                return bookingRepository.findByItemOwnerOrderByStartDesc(user);
+                result = bookingRepository.findByItemOwnerOrderByStartDesc(user);
+                break;
             case FUTURE:
-                return bookingRepository.findByItemOwnerAndStartAfterOrderByStartDesc(user, LocalDateTime.now());
+                result = bookingRepository.findByItemOwnerAndStartAfterOrderByStartDesc(user, LocalDateTime.now());
+                break;
             case WAITING:
-                return bookingRepository.findByItemOwnerAndStatusOrderByStartDesc(user, Status.WAITING);
+                result = bookingRepository.findByItemOwnerAndStatusOrderByStartDesc(user, Status.WAITING);
+                break;
             case REJECTED:
-                return bookingRepository.findByItemOwnerAndStatusOrderByStartDesc(user, REJECTED);
+                result = bookingRepository.findByItemOwnerAndStatusOrderByStartDesc(user, REJECTED);
+                break;
             case CURRENT:
-                return bookingRepository.findByItemOwnerAndStartBeforeAndEndAfterOrderByStartDesc(user,
+                result = bookingRepository.findByItemOwnerAndStartBeforeAndEndAfterOrderByStartDesc(user,
                         LocalDateTime.now(), LocalDateTime.now());
+                break;
             case PAST:
-                return bookingRepository.findByItemOwnerAndEndBeforeOrderByStartDesc(user, LocalDateTime.now());
-
-            default:
-                throw new RuntimeException("Unexpected state was received");
+                result = bookingRepository.findByItemOwnerAndEndBeforeOrderByStartDesc(user, LocalDateTime.now());
+                break;
         }
+
+        return result
+                .stream()
+                .map(BookingMapper::toDto)
+                .collect(Collectors.toList());
     }
 }

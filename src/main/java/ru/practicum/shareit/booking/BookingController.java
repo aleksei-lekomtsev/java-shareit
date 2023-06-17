@@ -16,7 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.booking.dto.BookingDto;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
+
+import static ru.practicum.shareit.util.Util.X_SHARER_USER_ID;
 
 
 @RestController
@@ -27,46 +28,37 @@ public class BookingController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public BookingDto createBooking(@RequestHeader("X-Sharer-User-Id") Long userId,
+    public BookingDto createBooking(@RequestHeader(X_SHARER_USER_ID) Long userId,
                                     @RequestBody @Validated(BookingBasicInfo.class) BookingDto dto) {
-        return BookingMapper.toDto(service.create(userId, dto));
+        return service.create(userId, dto);
     }
 
     @PatchMapping("/{bookingId}")
     @ResponseStatus(HttpStatus.OK)
-    public BookingDto updateBooking(@RequestHeader("X-Sharer-User-Id") Long userId,
+    public BookingDto updateBooking(@RequestHeader(X_SHARER_USER_ID) Long userId,
                                     @PathVariable Long bookingId,
                                     @RequestParam(name = "approved") Boolean approved) {
-        return BookingMapper.toDto(service.update(userId, bookingId, approved));
+        return service.update(userId, bookingId, approved);
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public Collection<BookingDto> getBookings(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                              @RequestParam(name = "state", required = false, defaultValue = "ALL")
-                                              String state) {
-        return service
-                .findAll(userId, state)
-                .stream()
-                .map(BookingMapper::toDto)
-                .collect(Collectors.toList());
+    public Collection<BookingDto> getBookings(@RequestHeader(X_SHARER_USER_ID) Long userId,
+                                              @RequestParam(name = "state", defaultValue = "ALL") String state) {
+        return service.findAll(userId, state);
     }
 
     @GetMapping("/owner")
     @ResponseStatus(HttpStatus.OK)
-    public Collection<BookingDto> getBookingsForOwner(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                          @RequestParam(name = "state", required = false, defaultValue = "ALL")
-                                          String state) {
-        return service
-                .findAllForOwner(userId, state)
-                .stream()
-                .map(BookingMapper::toDto)
-                .collect(Collectors.toList());
+    public Collection<BookingDto> getBookingsForOwner(@RequestHeader(X_SHARER_USER_ID) Long userId,
+                                                      @RequestParam(name = "state",
+                                                              defaultValue = "ALL") String state) {
+        return service.findAllForOwner(userId, state);
     }
 
     @GetMapping("/{bookingId}")
     @ResponseStatus(HttpStatus.OK)
-    public BookingDto getBookingById(@RequestHeader("X-Sharer-User-Id") Long userId, @PathVariable Long bookingId) {
-        return BookingMapper.toDto(service.findById(userId, bookingId));
+    public BookingDto getBookingById(@RequestHeader(X_SHARER_USER_ID) Long userId, @PathVariable Long bookingId) {
+        return service.findById(userId, bookingId);
     }
 }

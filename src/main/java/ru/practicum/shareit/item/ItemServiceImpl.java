@@ -49,7 +49,7 @@ public class ItemServiceImpl {
                 .collect(Collectors.toList());
     }
 
-    public Item create(Long userId, ItemDto entity) {
+    public ItemDto create(Long userId, ItemDto entity) {
         checkForNull(entity);
         User user = userRepository.findById(userId).orElseThrow(
                 () -> {
@@ -57,10 +57,10 @@ public class ItemServiceImpl {
                     throw new EntityNotFoundException(User.class,
                             "Пользователь с id=" + userId + " не существует.");
                 });
-        return itemRepository.save(ItemMapper.toItem(entity, user));
+        return ItemMapper.toItemDto(itemRepository.save(ItemMapper.toItem(entity, user)), null, null, null);
     }
 
-    public Item update(Long userId, ItemDto entity) {
+    public ItemDto update(Long userId, ItemDto entity) {
         checkForNull(entity);
         Item item = itemRepository.findById(entity.getId()).orElseThrow(
                 () -> {
@@ -77,6 +77,13 @@ public class ItemServiceImpl {
             log.error("Смена владельца не поддерживается.");
             throw new EntityNotFoundException(Item.class, "Смена владельца не поддерживается.");
         }
+
+        // > А проверки через if точно нужны?
+        // Если я правильно все понимаю...
+        // Когда происходит update в ItemDto entity может прийти новый description
+        // а старый name не прийти, т.е. в базе должен обновиться description, а name остаться старый
+        // Подобной проверкой я это учитываю и беру из Entity(item) старое значение name, чтобы
+        // при вызове save метода ItemRepository класса поля объекта аргумента для save были заполнены
         if (entity.getName() == null) {
             entity.setName(item.getName());
         }
@@ -87,7 +94,7 @@ public class ItemServiceImpl {
             entity.setAvailable(item.getAvailable());
         }
 
-        return itemRepository.save(ItemMapper.toItem(entity, user));
+        return ItemMapper.toItemDto(itemRepository.save(ItemMapper.toItem(entity, user)), null, null, null);
     }
 
     public ItemDto findById(Long userId, Long id) {
@@ -117,11 +124,16 @@ public class ItemServiceImpl {
         itemRepository.deleteById(id);
     }
 
-    public Collection<Item> search(String text) {
+    public Collection<ItemDto> search(String text) {
         if (text.isEmpty()) {
             return new ArrayList<>();
         }
-        return itemRepository.search(text);
+
+        return itemRepository
+                .search(text)
+                .stream()
+                .map(i -> ItemMapper.toItemDto(i, null, null, null))
+                .collect(Collectors.toList());
     }
 
     public CommentDto create(Long userId, Long itemId, CommentDto entity) {
