@@ -3,6 +3,7 @@ package ru.practicum.shareit.item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.Status;
@@ -27,7 +28,7 @@ import static ru.practicum.shareit.util.Util.checkForNull;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class ItemServiceImpl {
+public class ItemServiceImpl implements ItemService {
     private final ItemRepository    itemRepository;
     private final UserRepository    userRepository;
     private final BookingRepository bookingRepository;
@@ -55,53 +56,50 @@ public class ItemServiceImpl {
                 () -> {
                     log.warn("User with id={} not exist", userId);
                     throw new EntityNotFoundException(User.class,
-                            "Пользователь с id=" + userId + " не существует.");
+                            String.format("Entity with id=%d doesn't exist.", userId));
                 });
         return ItemMapper.toItemDto(itemRepository.save(ItemMapper.toItem(entity, user)), null, null, null);
     }
 
+    @Transactional
     public ItemDto update(Long userId, ItemDto entity) {
         checkForNull(entity);
         Item item = itemRepository.findById(entity.getId()).orElseThrow(
                 () -> {
                     log.warn("Entity with id={} doesn't exist", entity.getId());
-                    throw new EntityNotFoundException(Item.class, "Entity with id=" +
-                            entity.getId() + " doesn't exist.");
+                    throw new EntityNotFoundException(Item.class,
+                            String.format("Entity with id=%d doesn't exist.", entity.getId()));
                 });
         User user = userRepository.findById(userId).orElseThrow(
                 () -> {
                     log.warn("User with id={} not exist", userId);
-                    throw new EntityNotFoundException(User.class, "User with id=" + userId + " doesn't exist.");
+                    throw new EntityNotFoundException(User.class,
+                            String.format("Entity with id=%d doesn't exist.", userId));
                 });
         if (!Objects.equals(user.getId(), userId)) {
             log.error("Смена владельца не поддерживается.");
             throw new EntityNotFoundException(Item.class, "Смена владельца не поддерживается.");
         }
 
-        // > А проверки через if точно нужны?
-        // Если я правильно все понимаю...
-        // Когда происходит update в ItemDto entity может прийти новый description
-        // а старый name не прийти, т.е. в базе должен обновиться description, а name остаться старый
-        // Подобной проверкой я это учитываю и беру из Entity(item) старое значение name, чтобы
-        // при вызове save метода ItemRepository класса поля объекта аргумента для save были заполнены
-        if (entity.getName() == null) {
-            entity.setName(item.getName());
+        if (entity.getName() != null) {
+            item.setName(entity.getName());
         }
-        if (entity.getDescription() == null) {
-            entity.setDescription(item.getDescription());
+        if (entity.getDescription() != null) {
+            item.setDescription(entity.getDescription());
         }
-        if (entity.getAvailable() == null) {
-            entity.setAvailable(item.getAvailable());
+        if (entity.getAvailable() != null) {
+            item.setAvailable(entity.getAvailable());
         }
 
-        return ItemMapper.toItemDto(itemRepository.save(ItemMapper.toItem(entity, user)), null, null, null);
+        return ItemMapper.toItemDto(item, null, null, null);
     }
 
     public ItemDto findById(Long userId, Long id) {
         Item item = itemRepository.findById(id).orElseThrow(
                 () -> {
                     log.warn("Item with id={} not exist", id);
-                    throw new EntityNotFoundException(Item.class, "Вещь с id=" + id + " не существует.");
+                    throw new EntityNotFoundException(Item.class,
+                            String.format("Entity with id=%d doesn't exist.", id));
                 });
 
         List<CommentDto> comments = commentRepository
@@ -141,20 +139,21 @@ public class ItemServiceImpl {
         Booking byItemId = bookingRepository.findFirst1ByItemIdAndStatusAndStartBeforeAndBookerId(itemId,
                 Status.APPROVED, LocalDateTime.now(), userId);
         if (byItemId == null) {
-            throw new BadInputDataException("Booking wasn't found for item id: " + itemId);
+            throw new BadInputDataException(String.format("Booking wasn't found for item id: %d", itemId));
         }
 
         User user = userRepository.findById(userId).orElseThrow(
                 () -> {
                     log.warn("User with id={} not exist", userId);
                     throw new EntityNotFoundException(User.class,
-                            "Пользователь с id=" + userId + " не существует.");
+                            String.format("Entity with id=%d doesn't exist.", userId));
                 });
 
         Item item = itemRepository.findById(itemId).orElseThrow(
                 () -> {
                     log.warn("Item with id={} not exist", itemId);
-                    throw new EntityNotFoundException(Item.class, "Вещь с id=" + itemId + " не существует.");
+                    throw new EntityNotFoundException(Item.class,
+                            String.format("Entity with id=%d doesn't exist.", itemId));
                 });
 
         return CommentMapper.toDto(commentRepository.save(CommentMapper.toComment(entity,

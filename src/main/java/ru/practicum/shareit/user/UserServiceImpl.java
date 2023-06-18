@@ -3,6 +3,7 @@ package ru.practicum.shareit.user;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.EntityNotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
 
@@ -14,12 +15,12 @@ import static ru.practicum.shareit.util.Util.checkForNull;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class UserServiceImpl {
+public class UserServiceImpl implements UserService {
     private final UserRepository repository;
 
-    private boolean doesEmailExist(User user) {
+    private boolean doesEmailExist(UserDto dto) {
         return !repository
-                .findByEmailAndIdNot(user.getEmail(), user.getId())
+                .findByEmailAndIdNot(dto.getEmail(), dto.getId())
                 .isEmpty();
     }
 
@@ -32,48 +33,43 @@ public class UserServiceImpl {
     }
 
     public UserDto create(UserDto dto) {
-        User entity = UserMapper.toUser(dto);
-        checkForNull(entity);
-        if (doesEmailExist(entity)) {
-            log.error("Пользователь с email: " + entity.getEmail() + " уже существует");
-            throw new RuntimeException("Пользователь с email: " + entity.getEmail() + " уже существует");
+        checkForNull(dto);
+        if (doesEmailExist(dto)) {
+            log.error("Пользователь с email: {} уже существует.", dto.getEmail());
+            throw new RuntimeException(String.format("Пользователь с email: %s  уже существует.", dto.getEmail()));
         }
-        return UserMapper.toUserDto(repository.save(entity));
+        return UserMapper.toUserDto(repository.save(UserMapper.toUser(dto)));
     }
 
+    @Transactional
     public UserDto update(UserDto dto) {
-        User entity = UserMapper.toUser(dto);
-        checkForNull(entity);
-        User user = repository.findById(entity.getId()).orElseThrow(
+        checkForNull(dto);
+        User user = repository.findById(dto.getId()).orElseThrow(
                 () -> {
-                    log.warn("User with id={} not exist", entity.getId());
-                    throw new EntityNotFoundException(User.class, "User with id=" + entity.getId() + " doesn't exist.");
+                    log.warn("User with id={} not exist", dto.getId());
+                    throw new EntityNotFoundException(User.class,
+                            String.format("Entity with id=%d doesn't exist.", dto.getId()));
                 });
-        if (doesEmailExist(entity)) {
-            log.error("Пользователь с email: " + entity.getEmail() + " уже существует");
-            throw new RuntimeException("Пользователь с email: " + entity.getEmail() + " уже существует");
+        if (doesEmailExist(dto)) {
+            log.error("Пользователь с email: {} уже существует.", dto.getEmail());
+            throw new RuntimeException(String.format("Пользователь с email: %s  уже существует.", dto.getEmail()));
         }
 
-        // > Проверки точно нужны?
-        // Если я правильно все понимаю...
-        // Когда происходит update в UserDto entity может прийти новый description
-        // а старый name не прийти, т.е. в базе должен обновиться description, а name остаться старый
-        // Подобной проверкой я это учитываю и беру из Entity(user) старое значение name, чтобы
-        // при вызове save метода UserRepository класса поля объекта аргумента для save были заполнены
-        if (entity.getName() == null) {
-            entity.setName(user.getName());
+        if (dto.getName() != null) {
+            user.setName(dto.getName());
         }
-        if (entity.getEmail() == null) {
-            entity.setEmail(user.getEmail());
+        if (dto.getEmail() != null) {
+            user.setEmail(dto.getEmail());
         }
-        return UserMapper.toUserDto(repository.save(entity));
+        return UserMapper.toUserDto(user);
     }
 
     public UserDto findById(Long id) {
         return UserMapper.toUserDto(repository.findById(id).orElseThrow(
                 () -> {
                     log.warn("User with id={} not exist", id);
-                    throw new EntityNotFoundException(User.class, "Пользователь с id=" + id + " не существует.");
+                    throw new EntityNotFoundException(User.class,
+                            String.format("Entity with id=%d doesn't exist.", id));
                 }));
     }
 

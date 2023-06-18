@@ -6,21 +6,22 @@ import ru.practicum.shareit.booking.BookingBasicInfo;
 import ru.practicum.shareit.item.Item;
 import ru.practicum.shareit.user.User;
 
-import javax.validation.constraints.FutureOrPresent;
+import javax.validation.constraints.Future;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
+@StartBeforeEndDateValid(groups = BookingBasicInfo.class)
 public class BookingDto {
     private Long          id;
     private Long          itemId;
 
-    @FutureOrPresent(groups = BookingBasicInfo.class)
+    @Future(groups = BookingBasicInfo.class)
     @NotNull(groups = BookingBasicInfo.class)
     private LocalDateTime start;
 
-    @FutureOrPresent(groups = BookingBasicInfo.class)
+    @Future(groups = BookingBasicInfo.class)
     @NotNull(groups = BookingBasicInfo.class)
     private LocalDateTime end;
     private boolean       approved;

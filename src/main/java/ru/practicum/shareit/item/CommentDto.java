@@ -16,10 +16,5 @@ public class CommentDto {
 
     private String authorName;
 
-    // Привет, Семен!
-    // > А почему здесь не прописал аннотацию валидации?
-    // CommentDto используется, например, в createComment методе ItemController класса
-    // Если я правильно понял, то при создании комментария в body POST request поля authorName, created могут
-    // отсутствовать. Поэтому я не стал добавлять аннотацию @NotBlank
     private Long created;
 }

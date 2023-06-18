@@ -4,6 +4,7 @@ package ru.practicum.shareit.booking;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.exception.BadInputDataException;
 import ru.practicum.shareit.exception.EntityNotFoundException;
@@ -21,10 +22,11 @@ import static ru.practicum.shareit.booking.Status.APPROVED;
 import static ru.practicum.shareit.booking.Status.REJECTED;
 import static ru.practicum.shareit.util.Util.checkForNull;
 
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class BookingServiceImpl {
+public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final UserRepository    userRepository;
     private final ItemRepository    itemRepository;
@@ -32,19 +34,17 @@ public class BookingServiceImpl {
     public BookingDto create(Long userId, BookingDto entity) {
         checkForNull(entity);
 
-        if (entity.getStart().isEqual(entity.getEnd()) || entity.getStart().isAfter(entity.getEnd())) {
-            throw new BadInputDataException("Произошла непредвиденная ошибка.");
-        }
         User user = userRepository.findById(userId).orElseThrow(
                 () -> {
                     log.warn("User with id={} not exist", userId);
                     throw new EntityNotFoundException(User.class,
-                            "Пользователь с id=" + userId + " не существует.");
+                            String.format("Entity with id=%d doesn't exist.", userId));
                 });
         Item item = itemRepository.findByIdAndOwnerIdNot(entity.getItemId(), userId);
 
         if (item == null) {
-            throw new EntityNotFoundException(Item.class, "Entity with id=" + entity.getItemId() + " не существует.");
+            throw new EntityNotFoundException(Item.class,
+                    String.format("Entity with id=%d doesn't exist.", entity.getItemId()));
         }
 
         if (!item.getAvailable()) {
@@ -54,11 +54,13 @@ public class BookingServiceImpl {
         return BookingMapper.toDto(bookingRepository.save(BookingMapper.toBooking(entity, item, user, Status.WAITING)));
     }
 
+    @Transactional
     public BookingDto update(Long userId, Long bookingId, Boolean approved) {
         Booking booking = bookingRepository.findByItemOwnerIdAndId(userId, bookingId);
 
         if (booking == null) {
-            throw new EntityNotFoundException(Booking.class, "Entity with id=" + bookingId + " doesn't exist.");
+            throw new EntityNotFoundException(Booking.class,
+                    String.format("Entity with id=%d doesn't exist.", bookingId));
         }
 
         if (booking.getStatus().equals(APPROVED)) {
@@ -66,18 +68,20 @@ public class BookingServiceImpl {
         }
 
         booking.setStatus(approved ? APPROVED : REJECTED);
-        return BookingMapper.toDto(bookingRepository.save(booking));
+        return BookingMapper.toDto(booking);
     }
 
     public BookingDto findById(Long userId, Long id) {
         userRepository.findById(userId).orElseThrow(
                 () -> {
                     log.warn("User with id={} not exist", userId);
-                    throw new EntityNotFoundException(User.class, "Пользователь с id=" + userId + " не существует.");
+                    throw new EntityNotFoundException(User.class,
+                            String.format("Entity with id=%d doesn't exist.", userId));
                 });
         Booking result = bookingRepository.findByIdForOwnerOrBooker(userId, id);
         if (result == null) {
-            throw new EntityNotFoundException(Booking.class, "Entity with id=" + id + " doesn't exist.");
+            throw new EntityNotFoundException(Booking.class,
+                    String.format("Entity with id=%d doesn't exist.", id));
         }
         return BookingMapper.toDto(result);
     }
@@ -86,7 +90,8 @@ public class BookingServiceImpl {
         User user = userRepository.findById(bookerId).orElseThrow(
                 () -> {
                     log.warn("User with id={} not exist", bookerId);
-                    throw new EntityNotFoundException(User.class, "Пользователь с id=" + bookerId + " не существует.");
+                    throw new EntityNotFoundException(User.class,
+                            String.format("Entity with id=%d doesn't exist.", bookerId));
                 });
 
         Collection<Booking> result = new ArrayList<>();
@@ -123,7 +128,8 @@ public class BookingServiceImpl {
         User user = userRepository.findById(ownerId).orElseThrow(
                 () -> {
                     log.warn("User with id={} not exist", ownerId);
-                    throw new EntityNotFoundException(User.class, "Пользователь с id=" + ownerId + " не существует.");
+                    throw new EntityNotFoundException(User.class,
+                            String.format("Entity with id=%d doesn't exist.", ownerId));
                 });
 
         Collection<Booking> result = new ArrayList<>();

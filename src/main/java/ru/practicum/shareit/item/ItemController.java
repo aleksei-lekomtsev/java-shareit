@@ -25,7 +25,7 @@ import static ru.practicum.shareit.util.Util.X_SHARER_USER_ID;
 @RequestMapping("/items")
 @RequiredArgsConstructor
 public class ItemController {
-    private final ItemServiceImpl service;
+    private final ItemService service;
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)

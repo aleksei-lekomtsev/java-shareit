@@ -21,7 +21,7 @@ import java.util.Collection;
 @RequestMapping(path = "/users")
 @RequiredArgsConstructor
 public class UserController {
-    private final UserServiceImpl userService;
+    private final UserService userService;
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)

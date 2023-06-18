@@ -24,7 +24,7 @@ import static ru.practicum.shareit.util.Util.X_SHARER_USER_ID;
 @RequestMapping(path = "/bookings")
 @RequiredArgsConstructor
 public class BookingController {
-    private final BookingServiceImpl service;
+    private final BookingService service;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
