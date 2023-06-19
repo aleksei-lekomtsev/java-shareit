@@ -34,22 +34,8 @@ public class ItemServiceImpl implements ItemService {
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
 
-    public Collection<ItemDto> findAll(Long userId) {
-        return itemRepository
-                .findByOwnerId(userId)
-                .stream()
-                .map(i -> ItemMapper
-                        .toItemDto(i,
-                                bookingRepository.findFirst1ByItemIdAndStartBeforeAndStatusOrderByStartDesc(i.getId(),
-                                        LocalDateTime.now(), Status.APPROVED),
-                                bookingRepository.findFirst1ByItemIdAndStartAfterAndStatusOrderByStartAsc(i.getId(),
-                                        LocalDateTime.now(), Status.APPROVED),
-                                null)
-                )
-                .sorted(Comparator.comparing(ItemDto::getId))
-                .collect(Collectors.toList());
-    }
-
+    @Transactional
+    @Override
     public ItemDto create(Long userId, ItemDto entity) {
         checkForNull(entity);
         User user = userRepository.findById(userId).orElseThrow(
@@ -62,6 +48,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Transactional
+    @Override
     public ItemDto update(Long userId, ItemDto entity) {
         checkForNull(entity);
         Item item = itemRepository.findById(entity.getId()).orElseThrow(
@@ -94,6 +81,8 @@ public class ItemServiceImpl implements ItemService {
         return ItemMapper.toItemDto(item, null, null, null);
     }
 
+    @Transactional(readOnly = true)
+    @Override
     public ItemDto findById(Long userId, Long id) {
         Item item = itemRepository.findById(id).orElseThrow(
                 () -> {
@@ -118,10 +107,26 @@ public class ItemServiceImpl implements ItemService {
 
     }
 
-    public void delete(Long id) {
-        itemRepository.deleteById(id);
+    @Transactional(readOnly = true)
+    @Override
+    public Collection<ItemDto> findAll(Long userId) {
+        return itemRepository
+                .findByOwnerId(userId)
+                .stream()
+                .map(i -> ItemMapper
+                        .toItemDto(i,
+                                bookingRepository.findFirst1ByItemIdAndStartBeforeAndStatusOrderByStartDesc(i.getId(),
+                                        LocalDateTime.now(), Status.APPROVED),
+                                bookingRepository.findFirst1ByItemIdAndStartAfterAndStatusOrderByStartAsc(i.getId(),
+                                        LocalDateTime.now(), Status.APPROVED),
+                                null)
+                )
+                .sorted(Comparator.comparing(ItemDto::getId))
+                .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    @Override
     public Collection<ItemDto> search(String text) {
         if (text.isEmpty()) {
             return new ArrayList<>();
@@ -134,6 +139,14 @@ public class ItemServiceImpl implements ItemService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    @Override
+    public void delete(Long id) {
+        itemRepository.deleteById(id);
+    }
+
+    @Transactional
+    @Override
     public CommentDto create(Long userId, Long itemId, CommentDto entity) {
         checkForNull(entity);
         Booking byItemId = bookingRepository.findFirst1ByItemIdAndStatusAndStartBeforeAndBookerId(itemId,

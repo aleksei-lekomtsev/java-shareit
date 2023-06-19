@@ -31,6 +31,8 @@ public class BookingServiceImpl implements BookingService {
     private final UserRepository    userRepository;
     private final ItemRepository    itemRepository;
 
+    @Transactional
+    @Override
     public BookingDto create(Long userId, BookingDto entity) {
         checkForNull(entity);
 
@@ -55,6 +57,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Transactional
+    @Override
     public BookingDto update(Long userId, Long bookingId, Boolean approved) {
         Booking booking = bookingRepository.findByItemOwnerIdAndId(userId, bookingId);
 
@@ -71,6 +74,8 @@ public class BookingServiceImpl implements BookingService {
         return BookingMapper.toDto(booking);
     }
 
+    @Transactional(readOnly = true)
+    @Override
     public BookingDto findById(Long userId, Long id) {
         userRepository.findById(userId).orElseThrow(
                 () -> {
@@ -86,6 +91,8 @@ public class BookingServiceImpl implements BookingService {
         return BookingMapper.toDto(result);
     }
 
+    @Transactional(readOnly = true)
+    @Override
     public Collection<BookingDto> findAll(Long bookerId, String state) {
         User user = userRepository.findById(bookerId).orElseThrow(
                 () -> {
@@ -124,6 +131,8 @@ public class BookingServiceImpl implements BookingService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    @Override
     public Collection<BookingDto> findAllForOwner(Long ownerId, String state) {
         User user = userRepository.findById(ownerId).orElseThrow(
                 () -> {
