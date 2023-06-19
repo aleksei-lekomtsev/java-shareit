@@ -2,6 +2,6 @@ package ru.practicum.shareit.exception;
 
 public class EntityNotFoundException extends RuntimeException {
     public EntityNotFoundException(Class entityClass, String message) {
-        super("Не найдена сущность с типом: " + entityClass.getSimpleName() + ". " + message);
+        super(String.format("Entity with type=%s doesn't exist. %s", entityClass.getSimpleName(), message));
     }
 }

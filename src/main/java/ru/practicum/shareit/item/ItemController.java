@@ -17,62 +17,60 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.item.dto.ItemDto;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
+
+import static ru.practicum.shareit.util.Util.X_SHARER_USER_ID;
 
 
 @RestController
 @RequestMapping("/items")
 @RequiredArgsConstructor
 public class ItemController {
-    private final ItemServiceImpl itemService;
+    private final ItemService service;
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public Collection<ItemDto> getItems(@RequestHeader("X-Sharer-User-Id") Integer userId) {
-        return itemService
-                .findAll(userId)
-                .stream()
-                .map(ItemMapper::toItemDto)
-                .collect(Collectors.toList());
+    public Collection<ItemDto> getItems(@RequestHeader(X_SHARER_USER_ID) Long userId) {
+        return service.findAll(userId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ItemDto createItem(@RequestHeader("X-Sharer-User-Id") Integer userId,
+    public ItemDto createItem(@RequestHeader(X_SHARER_USER_ID) Long userId,
                               @RequestBody @Validated(ItemBasicInfo.class) ItemDto itemDto) {
-        itemDto.setOwnerId(userId);
-        return ItemMapper.toItemDto(itemService.create(ItemMapper.toItem(itemDto)));
+        return service.create(userId, itemDto);
     }
 
     @PatchMapping("/{itemId}")
     @ResponseStatus(HttpStatus.OK)
-    public ItemDto updateItem(@RequestHeader("X-Sharer-User-Id") Integer userId,
-                              @RequestBody ItemDto itemDto, @PathVariable Integer itemId) {
+    public ItemDto updateItem(@RequestHeader(X_SHARER_USER_ID) Long userId,
+                              @RequestBody ItemDto itemDto, @PathVariable Long itemId) {
         itemDto.setId(itemId);
-        itemDto.setOwnerId(userId);
-        return ItemMapper.toItemDto(itemService.update(ItemMapper.toItem(itemDto)));
+        return service.update(userId, itemDto);
     }
 
     @GetMapping("/{itemId}")
     @ResponseStatus(HttpStatus.OK)
-    public ItemDto getItemById(@RequestHeader("X-Sharer-User-Id") Integer userId, @PathVariable Integer itemId) {
-        return ItemMapper.toItemDto(itemService.findById(itemId));
+    public ItemDto getItemById(@RequestHeader(X_SHARER_USER_ID) Long userId, @PathVariable Long itemId) {
+        return service.findById(userId, itemId);
     }
-
 
     @DeleteMapping("/{itemId}")
     @ResponseStatus(HttpStatus.OK)
-    public void deleteItem(@PathVariable Integer itemId) {
-        itemService.delete(itemId);
+    public void deleteItem(@PathVariable Long itemId) {
+        service.delete(itemId);
     }
 
     @GetMapping("/search")
     @ResponseStatus(HttpStatus.OK)
     public Collection<ItemDto> search(@RequestParam(name = "text", required = false) String text) {
-        return itemService
-                .search(text)
-                .stream()
-                .map(ItemMapper::toItemDto)
-                .collect(Collectors.toList());
+        return service.search(text);
+    }
+
+    @PostMapping("/{itemId}/comment")
+    @ResponseStatus(HttpStatus.OK)
+    public CommentDto createComment(@RequestHeader(X_SHARER_USER_ID) Long userId,
+                                    @PathVariable Long itemId,
+                                    @RequestBody @Validated(CommentBasicInfo.class) CommentDto dto) {
+        return service.create(userId, itemId, dto);
     }
 }

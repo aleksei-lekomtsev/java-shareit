@@ -1,21 +1,27 @@
-package ru.practicum.shareit.user;
+package ru.practicum.shareit.item;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
-@Table(name = "users")
-public class User {
+@Table(name = "comments")
+public class Comment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,9 +29,16 @@ public class User {
 
     @Column
     @NotBlank
-    private String name;
+    private String text;
 
-    @Column(length = 512, unique = true)
+    @ManyToOne
+    @JoinColumn(name = "item_id")
+    private Item item;
+
+    @Column(name = "author_name")
+    private String authorName;
+
+    @Column
     @NotNull
-    private String email;
+    private Long created;
 }

@@ -15,48 +15,43 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.user.dto.UserDto;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 
 @RestController
 @RequestMapping(path = "/users")
 @RequiredArgsConstructor
 public class UserController {
-    private final UserServiceImpl userService;
+    private final UserService userService;
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public Collection<UserDto> getUsers() {
-        return userService
-                .findAll()
-                .stream()
-                .map(UserMapper::toUserDto)
-                .collect(Collectors.toList());
+        return userService.findAll();
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserDto createUser(@RequestBody @Validated(UserCreateBasicInfo.class) UserDto userDto) {
-        return UserMapper.toUserDto(userService.create(UserMapper.toUser(userDto)));
+        return userService.create(userDto);
     }
 
     @PatchMapping("/{userId}")
     @ResponseStatus(HttpStatus.OK)
-    public UserDto updateUser(@PathVariable Integer userId,
+    public UserDto updateUser(@PathVariable Long userId,
                               @RequestBody @Validated(UserUpdateBasicInfo.class) UserDto userDto) {
         userDto.setId(userId);
-        return UserMapper.toUserDto(userService.update(UserMapper.toUser(userDto)));
+        return userService.update(userDto);
     }
 
     @GetMapping("/{userId}")
     @ResponseStatus(HttpStatus.OK)
-    public UserDto getUserById(@PathVariable Integer userId) {
-        return UserMapper.toUserDto(userService.findById(userId));
+    public UserDto getUserById(@PathVariable Long userId) {
+        return userService.findById(userId);
     }
 
     @DeleteMapping("/{userId}")
     @ResponseStatus(HttpStatus.OK)
-    public void deleteUser(@PathVariable Integer userId) {
+    public void deleteUser(@PathVariable Long userId) {
         userService.delete(userId);
     }
 }
