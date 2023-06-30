@@ -4,6 +4,7 @@ import lombok.experimental.UtilityClass;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.dto.LastNextBookingDto;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.request.ItemRequest;
 import ru.practicum.shareit.user.User;
 
 import java.util.List;
@@ -24,17 +25,21 @@ public class ItemMapper {
                 nextBooking == null ?
                         null :
                         new LastNextBookingDto(nextBooking.getId(), nextBooking.getBooker().getId()),
-                comments
-                );
+                comments,
+                item.getItemRequest() == null ?
+                        null :
+                        item.getItemRequest().getId()
+        );
     }
 
-    public Item toItem(ItemDto item, User user) {
+    public Item toItem(ItemDto item, User user, ItemRequest itemRequest) {
         return new Item(
                 item.getId(),
                 item.getName(),
                 item.getDescription(),
                 item.getAvailable(),
-                user
+                user,
+                itemRequest
         );
     }
 }

@@ -3,6 +3,9 @@ package ru.practicum.shareit.booking;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
@@ -14,8 +17,7 @@ import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static ru.practicum.shareit.booking.Status.APPROVED;
@@ -42,11 +44,13 @@ public class BookingServiceImpl implements BookingService {
                     throw new EntityNotFoundException(User.class,
                             String.format("Entity with id=%d doesn't exist.", userId));
                 });
-        Item item = itemRepository.findByIdAndOwnerIdNot(entity.getItemId(), userId);
+
+        Long itemId = entity.getItemId();
+        Item item = itemRepository.findByIdAndOwnerIdNot(itemId, userId);
 
         if (item == null) {
             throw new EntityNotFoundException(Item.class,
-                    String.format("Entity with id=%d doesn't exist.", entity.getItemId()));
+                    String.format("Entity with id=%d doesn't exist.", itemId));
         }
 
         if (!item.getAvailable()) {
@@ -93,7 +97,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Transactional(readOnly = true)
     @Override
-    public Collection<BookingDto> findAll(Long bookerId, String state) {
+    public List<BookingDto> findAll(Long bookerId, String state, int from, int size, Boolean owner) {
         User user = userRepository.findById(bookerId).orElseThrow(
                 () -> {
                     log.warn("User with id={} not exist", bookerId);
@@ -101,71 +105,47 @@ public class BookingServiceImpl implements BookingService {
                             String.format("Entity with id=%d doesn't exist.", bookerId));
                 });
 
-        Collection<Booking> result = new ArrayList<>();
+        Page<Booking> result      = null;
+        Sort          sortByStart = Sort.by(Sort.Direction.DESC, "start");
+        PageRequest   page        = PageRequest.of(from > 0 ? from / size : 0, size, sortByStart);
 
         switch (State.valueOf(state)) {
             case ALL:
-                result = bookingRepository.findByBookerOrderByStartDesc(user);
+                result = owner ?
+                        bookingRepository.findByItemOwner(user, page) :
+                        bookingRepository.findByBooker(user, page);
                 break;
             case FUTURE:
-                result = bookingRepository.findByBookerAndStartAfterOrderByStartDesc(user, LocalDateTime.now());
+                result = owner ?
+                        bookingRepository.findByItemOwnerAndStartAfter(user, LocalDateTime.now(), page) :
+                        bookingRepository.findByBookerAndStartAfter(user, LocalDateTime.now(), page);
                 break;
             case WAITING:
-                result = bookingRepository.findByBookerAndStatusOrderByStartDesc(user, Status.WAITING);
+                result = owner ?
+                        bookingRepository.findByItemOwnerAndStatus(user, Status.WAITING, page) :
+                        bookingRepository.findByBookerAndStatus(user, Status.WAITING, page);
                 break;
             case REJECTED:
-                result = bookingRepository.findByBookerAndStatusOrderByStartDesc(user, REJECTED);
+                result = owner ?
+                        bookingRepository.findByItemOwnerAndStatus(user, REJECTED, page) :
+                        bookingRepository.findByBookerAndStatus(user, REJECTED, page);
                 break;
             case CURRENT:
-                result = bookingRepository.findByBookerAndStartBeforeAndEndAfterOrderByStartDesc(user,
-                        LocalDateTime.now(), LocalDateTime.now());
+                result = owner ?
+                        bookingRepository.findByItemOwnerAndStartBeforeAndEndAfter(user, LocalDateTime.now(),
+                                LocalDateTime.now(), page) :
+                        bookingRepository.findByBookerAndStartBeforeAndEndAfter(user, LocalDateTime.now(),
+                                LocalDateTime.now(), page);
                 break;
             case PAST:
-                result = bookingRepository.findByBookerAndEndBeforeOrderByStartDesc(user, LocalDateTime.now());
+                result = owner ?
+                        bookingRepository.findByItemOwnerAndEndBefore(user, LocalDateTime.now(), page) :
+                        bookingRepository.findByBookerAndEndBefore(user, LocalDateTime.now(), page);
                 break;
         }
 
         return result
-                .stream()
-                .map(BookingMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    @Override
-    public Collection<BookingDto> findAllForOwner(Long ownerId, String state) {
-        User user = userRepository.findById(ownerId).orElseThrow(
-                () -> {
-                    log.warn("User with id={} not exist", ownerId);
-                    throw new EntityNotFoundException(User.class,
-                            String.format("Entity with id=%d doesn't exist.", ownerId));
-                });
-
-        Collection<Booking> result = new ArrayList<>();
-
-        switch (State.valueOf(state)) {
-            case ALL:
-                result = bookingRepository.findByItemOwnerOrderByStartDesc(user);
-                break;
-            case FUTURE:
-                result = bookingRepository.findByItemOwnerAndStartAfterOrderByStartDesc(user, LocalDateTime.now());
-                break;
-            case WAITING:
-                result = bookingRepository.findByItemOwnerAndStatusOrderByStartDesc(user, Status.WAITING);
-                break;
-            case REJECTED:
-                result = bookingRepository.findByItemOwnerAndStatusOrderByStartDesc(user, REJECTED);
-                break;
-            case CURRENT:
-                result = bookingRepository.findByItemOwnerAndStartBeforeAndEndAfterOrderByStartDesc(user,
-                        LocalDateTime.now(), LocalDateTime.now());
-                break;
-            case PAST:
-                result = bookingRepository.findByItemOwnerAndEndBeforeOrderByStartDesc(user, LocalDateTime.now());
-                break;
-        }
-
-        return result
+                .getContent()
                 .stream()
                 .map(BookingMapper::toDto)
                 .collect(Collectors.toList());

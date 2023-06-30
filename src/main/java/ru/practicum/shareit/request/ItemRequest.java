@@ -1,9 +1,8 @@
-package ru.practicum.shareit.item;
+package ru.practicum.shareit.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.practicum.shareit.request.ItemRequest;
 import ru.practicum.shareit.user.User;
 
 import javax.persistence.Column;
@@ -17,12 +16,13 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "items")
-public class Item {
+@Table(name = "requests")
+public class ItemRequest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,21 +30,13 @@ public class Item {
 
     @Column
     @NotBlank
-    private String name;
-
-    @Column
-    @NotBlank
     private String description;
 
-    @Column(name = "is_available")
+    @ManyToOne
+    @JoinColumn(name = "requestor_id")
+    private User requestor;
+
+    @Column
     @NotNull
-    private Boolean available;
-
-    @ManyToOne
-    @JoinColumn(name = "owner_id")
-    private User owner;
-
-    @ManyToOne
-    @JoinColumn(name = "request_id")
-    private ItemRequest itemRequest;
+    private Long created;
 }

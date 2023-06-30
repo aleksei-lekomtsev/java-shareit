@@ -16,8 +16,8 @@ import static ru.practicum.shareit.util.Util.checkForNull;
 @RequiredArgsConstructor
 @Slf4j
 public class UserServiceImpl implements UserService {
-    private final UserRepository repository;
-    private final UserUserDtoMapper userUserDtoMapper;
+    private final UserRepository      repository;
+    private final UserMapper userMapper;
 
     private boolean doesEmailExist(UserDto dto) {
         return !repository
@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserService {
             log.error("Пользователь с email: {} уже существует.", dto.getEmail());
             throw new RuntimeException(String.format("Пользователь с email: %s  уже существует.", dto.getEmail()));
         }
-        return userUserDtoMapper.toDto(repository.save(userUserDtoMapper.toUser(dto)));
+        return userMapper.toDto(repository.save(userMapper.toUser(dto)));
     }
 
     @Transactional
@@ -57,13 +57,13 @@ public class UserServiceImpl implements UserService {
         if (dto.getEmail() != null) {
             user.setEmail(dto.getEmail());
         }
-        return userUserDtoMapper.toDto(user);
+        return userMapper.toDto(user);
     }
 
     @Transactional(readOnly = true)
     @Override
     public UserDto findById(Long id) {
-        return userUserDtoMapper.toDto(repository.findById(id).orElseThrow(
+        return userMapper.toDto(repository.findById(id).orElseThrow(
                 () -> {
                     log.warn("User with id={} not exist", id);
                     throw new EntityNotFoundException(User.class,
@@ -77,7 +77,7 @@ public class UserServiceImpl implements UserService {
         return repository
                 .findAll()
                 .stream()
-                .map(userUserDtoMapper::toDto)
+                .map(userMapper::toDto)
                 .collect(Collectors.toList());
     }
 

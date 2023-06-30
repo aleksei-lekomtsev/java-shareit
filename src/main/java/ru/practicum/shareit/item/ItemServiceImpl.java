@@ -10,6 +10,8 @@ import ru.practicum.shareit.booking.Status;
 import ru.practicum.shareit.exception.BadInputDataException;
 import ru.practicum.shareit.exception.EntityNotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.request.ItemRequest;
+import ru.practicum.shareit.request.ItemRequestRepository;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
@@ -29,10 +31,11 @@ import static ru.practicum.shareit.util.Util.checkForNull;
 @RequiredArgsConstructor
 @Slf4j
 public class ItemServiceImpl implements ItemService {
-    private final ItemRepository    itemRepository;
-    private final UserRepository    userRepository;
-    private final BookingRepository bookingRepository;
-    private final CommentRepository commentRepository;
+    private final ItemRepository        itemRepository;
+    private final UserRepository        userRepository;
+    private final BookingRepository     bookingRepository;
+    private final CommentRepository     commentRepository;
+    private final ItemRequestRepository itemRequestRepository;
 
     @Transactional
     @Override
@@ -44,7 +47,19 @@ public class ItemServiceImpl implements ItemService {
                     throw new EntityNotFoundException(User.class,
                             String.format("Entity with id=%d doesn't exist.", userId));
                 });
-        return ItemMapper.toItemDto(itemRepository.save(ItemMapper.toItem(entity, user)), null, null, null);
+
+        ItemRequest itemRequest = null;
+        if (entity.getRequestId() != null) {
+            itemRequest = itemRequestRepository.findById(entity.getRequestId()).orElseThrow(
+                    () -> {
+                        log.warn("Entity with id={} not exist", entity.getRequestId());
+                        throw new EntityNotFoundException(ItemRequest.class,
+                                String.format("Entity with id=%d doesn't exist.", entity.getRequestId()));
+                    });
+        }
+
+        return ItemMapper.toItemDto(itemRepository.save(ItemMapper.toItem(entity, user, itemRequest)),
+                null, null, null);
     }
 
     @Transactional
@@ -104,7 +119,6 @@ public class ItemServiceImpl implements ItemService {
                                 LocalDateTime.now(), Status.APPROVED),
                         comments)
                 : ItemMapper.toItemDto(item, null, null, comments);
-
     }
 
     @Transactional(readOnly = true)
@@ -169,7 +183,7 @@ public class ItemServiceImpl implements ItemService {
                             String.format("Entity with id=%d doesn't exist.", itemId));
                 });
 
-        return CommentMapper.toDto(commentRepository.save(CommentMapper.toComment(entity,
-                item, user.getName(), Instant.now().toEpochMilli())));
+        return CommentMapper.toDto(commentRepository.save(CommentMapper.toComment(entity, item, user.getName(),
+                Instant.now().toEpochMilli())));
     }
 }
