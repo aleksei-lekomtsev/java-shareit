@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import ru.practicum.shareit.user.User;
 
 import java.time.LocalDateTime;
@@ -35,10 +36,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     Booking findByItemOwnerIdAndId(Long userId, Long bookingId);
 
     @Query(" select b from Booking b " +
-            "where (b.booker.id = ?1" +
-            " or b.item.owner.id = ?1) " +
-            " and b.id = ?2")
-    Booking findByIdForOwnerOrBooker(Long userId, Long bookingId);
+            "where (b.booker.id = :userId" +
+            " or b.item.owner.id = :userId) " +
+            " and b.id = :bookingId")
+    Booking findByIdForOwnerOrBooker(@Param("userId") Long userId, @Param("bookingId") Long bookingId);
 
     Booking findFirst1ByItemIdAndStatusAndStartBeforeAndBookerId(Long id, Status status, LocalDateTime now,
                                                                  Long bookerId);

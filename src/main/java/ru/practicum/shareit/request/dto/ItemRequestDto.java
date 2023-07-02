@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import ru.practicum.shareit.request.ItemRequestBasicInfo;
 
 import javax.validation.constraints.NotBlank;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -19,7 +20,7 @@ public class ItemRequestDto {
             groups = ItemRequestBasicInfo.class)
     private String description;
 
-    private Long created;
+    private LocalDateTime created;
 
     private List<ItemDto> items;
 }

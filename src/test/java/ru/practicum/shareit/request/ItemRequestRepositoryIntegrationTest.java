@@ -8,12 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -39,12 +38,12 @@ class ItemRequestRepositoryIntegrationTest {
         itemRequest = new ItemRequest();
         itemRequest.setDescription("expected");
         itemRequest.setRequestor(user);
-        itemRequest.setCreated(Instant.now().toEpochMilli());
+        itemRequest.setCreated(LocalDateTime.now());
     }
 
     @Test
     void findAllByRequestorIdNot() {
-        PageRequest page = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "created"));
+        PageRequest   page   = new ItemRequestPageRequest(0, 10);
 
         userRepository.save(user);
         itemRequestRepository.save(itemRequest);

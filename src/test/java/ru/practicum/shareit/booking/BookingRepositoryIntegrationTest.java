@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import ru.practicum.shareit.item.Item;
 import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.user.User;
@@ -36,7 +35,7 @@ class BookingRepositoryIntegrationTest {
     private User booker;
     private Item item;
     private Booking booking;
-    PageRequest page;
+    private PageRequest page;
 
     @BeforeEach
     void beforeEach() {
@@ -61,7 +60,7 @@ class BookingRepositoryIntegrationTest {
         booking.setBooker(booker);
         booking.setStatus(Status.APPROVED);
         bookingRepository.save(booking);
-        page = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "start"));
+        page   = new BookingPageRequest(0, 10);
     }
 
     @Test

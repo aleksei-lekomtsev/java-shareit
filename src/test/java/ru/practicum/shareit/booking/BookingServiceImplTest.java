@@ -1,15 +1,18 @@
 package ru.practicum.shareit.booking;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.test.util.ReflectionTestUtils;
 import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.exception.BadInputDataException;
 import ru.practicum.shareit.exception.EntityNotFoundException;
 import ru.practicum.shareit.item.Item;
 import ru.practicum.shareit.item.ItemRepository;
@@ -44,6 +47,17 @@ class BookingServiceImplTest {
     @Mock
     private ItemRepository itemRepository;
 
+    private BookingMapper bookingMapper = Mappers.getMapper(BookingMapper.class);
+
+    @BeforeEach
+    void beforeEach() {
+        ReflectionTestUtils.setField(
+                service,
+                "bookingMapper",
+                bookingMapper
+        );
+    }
+
     @Test
     void findById() {
         Long           userId   = 0L;
@@ -57,7 +71,7 @@ class BookingServiceImplTest {
 
         BookingDto actual = service.findById(userId, id);
 
-        assertEquals(BookingMapper.toDto(expected), actual);
+        assertEquals(bookingMapper.toDto(expected), actual);
     }
 
     @Test
@@ -103,9 +117,9 @@ class BookingServiceImplTest {
         when(bookingRepository.save(booking)).thenReturn(booking);
         when(itemRepository.findByIdAndOwnerIdNot(itemId, userId)).thenReturn(item);
 
-        BookingDto actual = service.create(userId, BookingMapper.toDto(booking));
+        BookingDto actual = service.create(userId, bookingMapper.toDto(booking));
 
-        assertEquals(BookingMapper.toDto(booking), actual);
+        assertEquals(bookingMapper.toDto(booking), actual);
         verify(bookingRepository).save(booking);
     }
 
@@ -125,7 +139,7 @@ class BookingServiceImplTest {
         booking.setStatus(Status.WAITING);
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> service.create(userId, BookingMapper.toDto(booking)));
+        assertThrows(EntityNotFoundException.class, () -> service.create(userId, bookingMapper.toDto(booking)));
     }
 
     @Test
@@ -145,7 +159,27 @@ class BookingServiceImplTest {
         when(userRepository.findById(userId)).thenReturn(user);
         when(itemRepository.findByIdAndOwnerIdNot(itemId, userId)).thenReturn(null);
 
-        assertThrows(EntityNotFoundException.class, () -> service.create(userId, BookingMapper.toDto(booking)));
+        assertThrows(EntityNotFoundException.class, () -> service.create(userId, bookingMapper.toDto(booking)));
+    }
+
+    @Test
+    void createItemNotAvailable() {
+        Long           userId = 0L;
+        Long           id     = 0L;
+        Long           itemId = 0L;
+        Optional<User> user   = Optional.of(new User());
+        Item           item   = new Item();
+        item.setId(itemId);
+        item.setAvailable(false);
+        Booking booking = new Booking();
+        booking.setId(id);
+        booking.setItem(item);
+        booking.setBooker(user.get());
+        booking.setStatus(Status.WAITING);
+        when(userRepository.findById(userId)).thenReturn(user);
+        when(itemRepository.findByIdAndOwnerIdNot(itemId, userId)).thenReturn(item);
+
+        assertThrows(BadInputDataException.class, () -> service.create(userId, bookingMapper.toDto(booking)));
     }
 
     @Test
@@ -159,7 +193,7 @@ class BookingServiceImplTest {
         booking.setStatus(Status.APPROVED);
         List<Booking> expected     = List.of(booking);
         Page<Booking> expectedPage = new PageImpl<>(expected);
-        PageRequest   page         = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "start"));
+        PageRequest   page   = new BookingPageRequest(0, 10);
         when(userRepository.findById(userId)).thenReturn(userOptional);
         when(bookingRepository.findByItemOwner(user, page)).thenReturn(expectedPage);
         when(bookingRepository.findByItemOwnerAndStartAfter(eq(user), any(LocalDateTime.class), eq(page)))
@@ -178,12 +212,12 @@ class BookingServiceImplTest {
         List<BookingDto> current  = service.findAll(userId, "CURRENT", 0, 10, true);
         List<BookingDto> past     = service.findAll(userId, "PAST", 0, 10, true);
 
-        assertEquals(expected.stream().map(BookingMapper::toDto).collect(Collectors.toList()), all);
-        assertEquals(expected.stream().map(BookingMapper::toDto).collect(Collectors.toList()), future);
-        assertEquals(expected.stream().map(BookingMapper::toDto).collect(Collectors.toList()), waiting);
-        assertEquals(expected.stream().map(BookingMapper::toDto).collect(Collectors.toList()), rejected);
-        assertEquals(expected.stream().map(BookingMapper::toDto).collect(Collectors.toList()), current);
-        assertEquals(expected.stream().map(BookingMapper::toDto).collect(Collectors.toList()), past);
+        assertEquals(expected.stream().map(bookingMapper::toDto).collect(Collectors.toList()), all);
+        assertEquals(expected.stream().map(bookingMapper::toDto).collect(Collectors.toList()), future);
+        assertEquals(expected.stream().map(bookingMapper::toDto).collect(Collectors.toList()), waiting);
+        assertEquals(expected.stream().map(bookingMapper::toDto).collect(Collectors.toList()), rejected);
+        assertEquals(expected.stream().map(bookingMapper::toDto).collect(Collectors.toList()), current);
+        assertEquals(expected.stream().map(bookingMapper::toDto).collect(Collectors.toList()), past);
     }
 
     @Test
@@ -211,7 +245,7 @@ class BookingServiceImplTest {
         booking.setStatus(Status.APPROVED);
         List<Booking> expected     = List.of(booking);
         Page<Booking> expectedPage = new PageImpl<>(expected);
-        PageRequest   page         = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "start"));
+        PageRequest   page   = new BookingPageRequest(0, 10);
         when(userRepository.findById(userId)).thenReturn(userOptional);
         when(bookingRepository.findByBooker(user, page)).thenReturn(expectedPage);
         when(bookingRepository.findByBookerAndStartAfter(eq(user), any(LocalDateTime.class), eq(page)))
@@ -230,12 +264,12 @@ class BookingServiceImplTest {
         List<BookingDto> current  = service.findAll(userId, "CURRENT", 0, 10, false);
         List<BookingDto> past     = service.findAll(userId, "PAST", 0, 10, false);
 
-        assertEquals(expected.stream().map(BookingMapper::toDto).collect(Collectors.toList()), all);
-        assertEquals(expected.stream().map(BookingMapper::toDto).collect(Collectors.toList()), future);
-        assertEquals(expected.stream().map(BookingMapper::toDto).collect(Collectors.toList()), waiting);
-        assertEquals(expected.stream().map(BookingMapper::toDto).collect(Collectors.toList()), rejected);
-        assertEquals(expected.stream().map(BookingMapper::toDto).collect(Collectors.toList()), current);
-        assertEquals(expected.stream().map(BookingMapper::toDto).collect(Collectors.toList()), past);
+        assertEquals(expected.stream().map(bookingMapper::toDto).collect(Collectors.toList()), all);
+        assertEquals(expected.stream().map(bookingMapper::toDto).collect(Collectors.toList()), future);
+        assertEquals(expected.stream().map(bookingMapper::toDto).collect(Collectors.toList()), waiting);
+        assertEquals(expected.stream().map(bookingMapper::toDto).collect(Collectors.toList()), rejected);
+        assertEquals(expected.stream().map(bookingMapper::toDto).collect(Collectors.toList()), current);
+        assertEquals(expected.stream().map(bookingMapper::toDto).collect(Collectors.toList()), past);
     }
 
     @Test
@@ -283,5 +317,24 @@ class BookingServiceImplTest {
         when(bookingRepository.findByItemOwnerIdAndId(userId, itemId)).thenReturn(null);
 
         assertThrows(EntityNotFoundException.class, () -> service.update(userId, id, true));
+    }
+
+    @Test
+    void updateStatusAlreadyApproved() {
+        Long id     = 0L;
+        Long userId = 0L;
+        Long itemId = 0L;
+        User user   = new User();
+        user.setId(userId);
+        Item item = new Item();
+        item.setId(itemId);
+        item.setOwner(user);
+        Booking booking = new Booking();
+        booking.setId(id);
+        booking.setItem(item);
+        booking.setStatus(Status.APPROVED);
+        when(bookingRepository.findByItemOwnerIdAndId(userId, itemId)).thenReturn(booking);
+
+        assertThrows(BadInputDataException.class, () -> service.update(userId, id, true));
     }
 }

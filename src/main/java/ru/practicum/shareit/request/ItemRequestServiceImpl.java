@@ -3,7 +3,6 @@ package ru.practicum.shareit.request;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.EntityNotFoundException;
@@ -13,6 +12,7 @@ import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,8 +26,8 @@ import static ru.practicum.shareit.util.Util.checkForNull;
 public class ItemRequestServiceImpl implements ItemRequestService {
     private final ItemRequestRepository itemRequestRepository;
     private final UserRepository        userRepository;
-    private final ItemRepository             itemRepository;
-    private final ItemRequestMapper itemRequestMapper;
+    private final ItemRepository        itemRepository;
+    private final ItemRequestMapper     itemRequestMapper;
 
     private ItemRequestDto fetchItemsAndCreateItemRequestDto(ItemRequest itemRequest) {
         List<ItemDto> items = itemRepository
@@ -51,7 +51,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Transactional
     @Override
-    public ItemRequestDto create(Long userId, ItemRequestDto dto, Long created) {
+    public ItemRequestDto create(Long userId, ItemRequestDto dto, LocalDateTime created) {
         checkForNull(dto);
         User user = userRepository.findById(userId).orElseThrow(
                 () -> {
@@ -83,8 +83,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Override
     public List<ItemRequestDto> findAll(Long userId, int from, int size) {
-        Sort        sortByCreated = Sort.by(Sort.Direction.DESC, "created");
-        PageRequest page          = PageRequest.of(from > 0 ? from / size : 0, size, sortByCreated);
+        PageRequest page = new ItemRequestPageRequest(from, size);
         return itemRequestRepository
                 .findAllByRequestorIdNot(userId, page)
                 .map(this::fetchItemsAndCreateItemRequestDto)

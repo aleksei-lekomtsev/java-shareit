@@ -10,7 +10,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 import ru.practicum.shareit.exception.EntityNotFoundException;
 import ru.practicum.shareit.item.Item;
@@ -21,7 +20,7 @@ import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -109,7 +108,7 @@ class ItemRequestServiceImplTest {
         ItemRequest    itemRequest = new ItemRequest();
         itemRequest.setId(id);
         itemRequest.setRequestor(user.get());
-        long created = Instant.now().toEpochMilli();
+        LocalDateTime created = LocalDateTime.now();
         itemRequest.setCreated(created);
         when(userRepository.findById(userId)).thenReturn(user);
         when(itemRequestRepository.save(itemRequest)).thenReturn(itemRequest);
@@ -128,7 +127,7 @@ class ItemRequestServiceImplTest {
         ItemRequest    itemRequest = new ItemRequest();
         itemRequest.setId(id);
         itemRequest.setRequestor(user.get());
-        long created = Instant.now().toEpochMilli();
+        LocalDateTime created = LocalDateTime.now();
         itemRequest.setCreated(created);
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
@@ -194,7 +193,7 @@ class ItemRequestServiceImplTest {
         Item              item          = new Item();
         List<Item>        items         = List.of(item);
         item.setId(itemId);
-        PageRequest       page         = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "created"));
+        PageRequest   page   = new ItemRequestPageRequest(0, 10);
         Page<ItemRequest> expectedPage = new PageImpl<>(itemsRequests);
 
         when(itemRequestRepository.findAllByRequestorIdNot(userId, page)).thenReturn(expectedPage);

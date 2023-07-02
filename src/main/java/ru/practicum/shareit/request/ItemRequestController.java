@@ -14,8 +14,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 
-import javax.validation.constraints.Min;
-import java.time.Instant;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class ItemRequestController {
     @ResponseStatus(HttpStatus.CREATED)
     public ItemRequestDto createItemRequest(@RequestHeader(X_SHARER_USER_ID) Long userId,
                                             @RequestBody @Validated(ItemRequestBasicInfo.class) ItemRequestDto dto) {
-        return service.create(userId, dto, Instant.now().toEpochMilli());
+        return service.create(userId, dto, LocalDateTime.now());
     }
 
     @GetMapping
@@ -45,8 +46,9 @@ public class ItemRequestController {
     @GetMapping("/all")
     @ResponseStatus(HttpStatus.OK)
     public List<ItemRequestDto> getItemsRequests(@RequestHeader(X_SHARER_USER_ID) Long userId,
-                                                 @RequestParam(name = "from", defaultValue = "0") @Min(0) int from,
-                                                 @RequestParam(name = "size", defaultValue = "10") @Min(1) int size) {
+                                                 @RequestParam(name = "from", defaultValue = "0")
+                                                 @PositiveOrZero int from,
+                                                 @RequestParam(name = "size", defaultValue = "10") @Positive int size) {
         return service.findAll(userId, from, size);
     }
 

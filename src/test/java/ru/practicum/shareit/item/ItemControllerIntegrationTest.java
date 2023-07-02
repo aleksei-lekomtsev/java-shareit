@@ -1,7 +1,6 @@
 package ru.practicum.shareit.item;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -37,10 +36,8 @@ class ItemControllerIntegrationTest {
     @MockBean
     private UserService userService;
 
-
-    @SneakyThrows
     @Test
-    void createItem() {
+    void createItem() throws Exception {
         Long    userId  = 0L;
         ItemDto itemDto = new ItemDto();
         itemDto.setName("name");
@@ -62,9 +59,8 @@ class ItemControllerIntegrationTest {
         assertEquals(objectMapper.writeValueAsString(itemDto), result);
     }
 
-    @SneakyThrows
     @Test
-    void updateItem() {
+    void updateItem() throws Exception {
         Long    id      = 0L;
         Long    userId  = 0L;
         ItemDto itemDto = new ItemDto();
@@ -88,9 +84,8 @@ class ItemControllerIntegrationTest {
         assertEquals(objectMapper.writeValueAsString(itemDto), result);
     }
 
-    @SneakyThrows
     @Test
-    void getItemById() {
+    void getItemById() throws Exception {
         Long userId = 0L;
         Long id     = 0L;
         mockMvc
@@ -100,9 +95,8 @@ class ItemControllerIntegrationTest {
         verify(itemService).findById(userId, id);
     }
 
-    @SneakyThrows
     @Test
-    void getItems() {
+    void getItems() throws Exception {
         Long userId = 0L;
         Long id     = 0L;
         mockMvc
@@ -113,9 +107,8 @@ class ItemControllerIntegrationTest {
         verify(itemService).findAll(userId);
     }
 
-    @SneakyThrows
     @Test
-    public void deleteItem() {
+    public void deleteItem() throws Exception {
         long id = 0L;
         mockMvc
                 .perform(delete("/items/{itemId}", id))
@@ -124,9 +117,8 @@ class ItemControllerIntegrationTest {
         verify(itemService).delete(id);
     }
 
-    @SneakyThrows
     @Test
-    void search() {
+    void search() throws Exception {
         Long id     = 0L;
         mockMvc
                 .perform(get("/items/search", id))

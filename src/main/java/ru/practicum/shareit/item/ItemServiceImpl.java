@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static ru.practicum.shareit.util.Util.checkForNull;
@@ -36,6 +35,8 @@ public class ItemServiceImpl implements ItemService {
     private final BookingRepository     bookingRepository;
     private final CommentRepository     commentRepository;
     private final ItemRequestRepository itemRequestRepository;
+    private final CommentMapper         commentMapper;
+    private final ItemMapper            itemMapper;
 
     @Transactional
     @Override
@@ -58,7 +59,7 @@ public class ItemServiceImpl implements ItemService {
                     });
         }
 
-        return ItemMapper.toItemDto(itemRepository.save(ItemMapper.toItem(entity, user, itemRequest)),
+        return itemMapper.toItemDto(itemRepository.save(itemMapper.toItem(entity, user, itemRequest)),
                 null, null, null);
     }
 
@@ -72,16 +73,12 @@ public class ItemServiceImpl implements ItemService {
                     throw new EntityNotFoundException(Item.class,
                             String.format("Entity with id=%d doesn't exist.", entity.getId()));
                 });
-        User user = userRepository.findById(userId).orElseThrow(
+        userRepository.findById(userId).orElseThrow(
                 () -> {
                     log.warn("User with id={} not exist", userId);
                     throw new EntityNotFoundException(User.class,
                             String.format("Entity with id=%d doesn't exist.", userId));
                 });
-        if (!Objects.equals(user.getId(), userId)) {
-            log.error("Смена владельца не поддерживается.");
-            throw new EntityNotFoundException(Item.class, "Смена владельца не поддерживается.");
-        }
 
         if (entity.getName() != null) {
             item.setName(entity.getName());
@@ -93,7 +90,7 @@ public class ItemServiceImpl implements ItemService {
             item.setAvailable(entity.getAvailable());
         }
 
-        return ItemMapper.toItemDto(item, null, null, null);
+        return itemMapper.toItemDto(item, null, null, null);
     }
 
     @Transactional(readOnly = true)
@@ -109,16 +106,16 @@ public class ItemServiceImpl implements ItemService {
         List<CommentDto> comments = commentRepository
                 .findByItemId(id)
                 .stream()
-                .map(CommentMapper::toDto)
+                .map(commentMapper::toDto)
                 .collect(Collectors.toList());
         return userId.equals(item.getOwner().getId()) ?
-                ItemMapper.toItemDto(item,
+                itemMapper.toItemDto(item,
                         bookingRepository.findFirst1ByItemIdAndStartBeforeAndStatusOrderByStartDesc(id,
                                 LocalDateTime.now(), Status.APPROVED),
                         bookingRepository.findFirst1ByItemIdAndStartAfterAndStatusOrderByStartAsc(id,
                                 LocalDateTime.now(), Status.APPROVED),
                         comments)
-                : ItemMapper.toItemDto(item, null, null, comments);
+                : itemMapper.toItemDto(item, null, null, comments);
     }
 
     @Transactional(readOnly = true)
@@ -127,7 +124,7 @@ public class ItemServiceImpl implements ItemService {
         return itemRepository
                 .findByOwnerId(userId)
                 .stream()
-                .map(i -> ItemMapper
+                .map(i -> itemMapper
                         .toItemDto(i,
                                 bookingRepository.findFirst1ByItemIdAndStartBeforeAndStatusOrderByStartDesc(i.getId(),
                                         LocalDateTime.now(), Status.APPROVED),
@@ -149,7 +146,7 @@ public class ItemServiceImpl implements ItemService {
         return itemRepository
                 .search(text)
                 .stream()
-                .map(i -> ItemMapper.toItemDto(i, null, null, null))
+                .map(i -> itemMapper.toItemDto(i, null, null, null))
                 .collect(Collectors.toList());
     }
 
@@ -183,7 +180,7 @@ public class ItemServiceImpl implements ItemService {
                             String.format("Entity with id=%d doesn't exist.", itemId));
                 });
 
-        return CommentMapper.toDto(commentRepository.save(CommentMapper.toComment(entity, item, user.getName(),
-                Instant.now().toEpochMilli())));
+        return commentMapper.toDto(commentRepository.save(commentMapper.toComment(entity, item,
+                user.getName(), Instant.now().toEpochMilli())));
     }
 }

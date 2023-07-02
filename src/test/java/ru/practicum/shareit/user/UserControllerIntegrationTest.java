@@ -1,7 +1,6 @@
 package ru.practicum.shareit.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -33,9 +32,8 @@ class UserControllerIntegrationTest {
     @MockBean
     private UserService userService;
 
-    @SneakyThrows
     @Test
-    void createUser() {
+    void createUser() throws Exception {
         UserDto user = new UserDto();
         user.setName("name");
         user.setEmail("email@mail.ru");
@@ -54,9 +52,8 @@ class UserControllerIntegrationTest {
 
     }
 
-    @SneakyThrows
     @Test
-    void updateUser() {
+    void updateUser() throws Exception {
         long    id   = 0L;
         UserDto user = new UserDto();
         user.setId(id);
@@ -77,9 +74,8 @@ class UserControllerIntegrationTest {
         assertEquals(objectMapper.writeValueAsString(user), result);
     }
 
-    @SneakyThrows
     @Test
-    void updateUserFailInvalidEmail() {
+    void updateUserFailInvalidEmail() throws Exception {
         long    id   = 0L;
         UserDto user = new UserDto();
         user.setName("name");
@@ -94,9 +90,8 @@ class UserControllerIntegrationTest {
         verify(userService, never()).update(user);
     }
 
-    @SneakyThrows
     @Test
-    void getUserById() {
+    void getUserById() throws Exception {
         long id = 0L;
         mockMvc
                 .perform(get("/users/{userId}", id))
@@ -105,9 +100,8 @@ class UserControllerIntegrationTest {
         verify(userService).findById(id);
     }
 
-    @SneakyThrows
     @Test
-    void deleteUser() {
+    void deleteUser() throws Exception {
         long id = 0L;
         mockMvc
                 .perform(delete("/users/{userId}", id))

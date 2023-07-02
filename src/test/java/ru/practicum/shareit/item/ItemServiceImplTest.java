@@ -1,10 +1,13 @@
 package ru.practicum.shareit.item;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.Status;
@@ -53,6 +56,25 @@ class ItemServiceImplTest {
     @Mock
     private ItemRepository itemRepository;
 
+    private CommentMapper commentMapper = Mappers.getMapper(CommentMapper.class);
+
+    private ItemMapper itemMapper = Mappers.getMapper(ItemMapper.class);
+
+    @BeforeEach
+    void beforeEach() {
+        ReflectionTestUtils.setField(
+                service,
+                "commentMapper",
+                commentMapper
+        );
+
+        ReflectionTestUtils.setField(
+                service,
+                "itemMapper",
+                itemMapper
+        );
+    }
+
     @Test
     void findById() {
         Long          id               = 0L;
@@ -71,8 +93,8 @@ class ItemServiceImplTest {
                 any(LocalDateTime.class), eq(Status.APPROVED))).thenReturn(null);
         ItemDto actual = service.findById(userId, id);
 
-        assertEquals(ItemMapper.toItemDto(expectedItem, null, null,
-                expectedComments.stream().map(CommentMapper::toDto).collect(Collectors.toList())), actual);
+        assertEquals(itemMapper.toItemDto(expectedItem, null, null,
+                expectedComments.stream().map(commentMapper::toDto).collect(Collectors.toList())), actual);
     }
 
     @Test
@@ -111,10 +133,10 @@ class ItemServiceImplTest {
 
     @Test
     void createNotFoundUser() {
-        Long           userId    = 0L;
-        Long           itemId    = 0L;
-        Long           requestId = 0L;
-        ItemDto        itemDto   = new ItemDto();
+        Long    userId    = 0L;
+        Long    itemId    = 0L;
+        Long    requestId = 0L;
+        ItemDto itemDto   = new ItemDto();
         itemDto.setId(itemId);
         itemDto.setRequestId(requestId);
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
@@ -234,7 +256,7 @@ class ItemServiceImplTest {
 
         assertEquals(expected
                 .stream()
-                .map(i -> ItemMapper.toItemDto(i, null, null, null))
+                .map(i -> itemMapper.toItemDto(i, null, null, null))
                 .collect(Collectors.toList()), actual);
     }
 
@@ -256,22 +278,56 @@ class ItemServiceImplTest {
 
         assertEquals(expected
                 .stream()
-                .map(i -> ItemMapper.toItemDto(i, null, null, null))
+                .map(i -> itemMapper.toItemDto(i, null, null, null))
                 .collect(Collectors.toList()), actual);
     }
 
     @Test
     void searchWithEmptyText() {
-        String text = "";
+        String     text     = "";
         List<Item> expected = List.of();
 
         Collection<ItemDto> actual = service.search(text);
 
         assertEquals(expected
                 .stream()
-                .map(i -> ItemMapper.toItemDto(i, null, null, null))
+                .map(i -> itemMapper.toItemDto(i, null, null, null))
                 .collect(Collectors.toList()), actual);
         verify(itemRepository, never()).search(text);
+    }
+
+    @Test
+    void createComment() {
+        Long userId    = 0L;
+        Long itemId    = 0L;
+        Long bookingId = 0L;
+        Long commentId = 0L;
+        User user      = new User();
+        user.setName("name");
+        Optional<User> userOptional = Optional.of(user);
+        Item           item         = new Item();
+        item.setId(itemId);
+        item.setOwner(userOptional.get());
+        Optional<Item> itemOptional = Optional.of(item);
+
+        Booking booking = new Booking();
+        booking.setId(bookingId);
+        booking.setItem(item);
+        Comment comment = new Comment();
+        comment.setId(commentId);
+        comment.setItem(item);
+        comment.setCreated(Instant.now().toEpochMilli());
+        CommentDto commentDto = commentMapper.toDto(comment);
+
+        when(bookingRepository.findFirst1ByItemIdAndStatusAndStartBeforeAndBookerId(eq(itemId), eq(Status.APPROVED),
+                any(LocalDateTime.class), eq(userId))).thenReturn(booking);
+        when(userRepository.findById(userId)).thenReturn(userOptional);
+        when(itemRepository.findById(itemId)).thenReturn(itemOptional);
+        when(commentRepository.save(any(Comment.class))).thenReturn(comment);
+
+        CommentDto actual = service.create(userId, itemId, commentMapper.toDto(comment));
+
+        assertEquals(commentDto, actual);
     }
 
     @Test
@@ -296,7 +352,8 @@ class ItemServiceImplTest {
                 any(LocalDateTime.class), eq(userId))).thenReturn(booking);
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> service.create(userId, itemId, CommentMapper.toDto(comment)));
+        assertThrows(EntityNotFoundException.class, () -> service.create(userId, itemId,
+                commentMapper.toDto(comment)));
     }
 
     @Test
@@ -324,6 +381,7 @@ class ItemServiceImplTest {
         when(userRepository.findById(userId)).thenReturn(userOptional);
         when(itemRepository.findById(itemId)).thenReturn(Optional.empty());
 
-        assertThrows(EntityNotFoundException.class, () -> service.create(userId, itemId, CommentMapper.toDto(comment)));
+        assertThrows(EntityNotFoundException.class, () -> service.create(userId, itemId,
+                commentMapper.toDto(comment)));
     }
 }

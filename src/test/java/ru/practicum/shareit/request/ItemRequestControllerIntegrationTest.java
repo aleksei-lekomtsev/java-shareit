@@ -1,7 +1,6 @@
 package ru.practicum.shareit.request;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -12,8 +11,10 @@ import ru.practicum.shareit.user.UserController;
 import ru.practicum.shareit.user.UserService;
 
 
+import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,13 +39,13 @@ class ItemRequestControllerIntegrationTest {
     @MockBean
     private UserService userService;
 
-    @SneakyThrows
     @Test
-    void createItemRequest() {
+    void createItemRequest() throws Exception {
         Long           userId         = 0L;
         ItemRequestDto itemRequestDto = new ItemRequestDto();
         itemRequestDto.setDescription("expected");
-        when(itemRequestService.create(eq(userId), eq(itemRequestDto), anyLong())).thenReturn(itemRequestDto);
+        when(itemRequestService.create(eq(userId), eq(itemRequestDto), any(LocalDateTime.class)))
+                .thenReturn(itemRequestDto);
 
         String result = mockMvc
                 .perform(post("/requests")
@@ -59,9 +60,8 @@ class ItemRequestControllerIntegrationTest {
         assertEquals(objectMapper.writeValueAsString(itemRequestDto), result);
     }
 
-    @SneakyThrows
     @Test
-    void findById() {
+    void findById() throws Exception {
         Long userId = 0L;
         Long id     = 0L;
         mockMvc
@@ -71,9 +71,8 @@ class ItemRequestControllerIntegrationTest {
         verify(itemRequestService).findById(userId, id);
     }
 
-    @SneakyThrows
     @Test
-    void getItemsRequests() {
+    void getItemsRequests() throws Exception {
         Long userId = 0L;
         mockMvc
                 .perform(get("/requests/all").header(X_SHARER_USER_ID, userId))

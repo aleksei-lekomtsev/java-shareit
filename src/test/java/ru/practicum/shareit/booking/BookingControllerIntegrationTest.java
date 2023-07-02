@@ -1,7 +1,6 @@
 package ru.practicum.shareit.booking;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -38,9 +37,8 @@ class BookingControllerIntegrationTest {
     @MockBean
     private UserService userService;
 
-    @SneakyThrows
     @Test
-    void createBooking() {
+    void createBooking() throws Exception {
         Long       userId     = 0L;
         BookingDto bookingDto = new BookingDto();
         bookingDto.setStart(LocalDateTime.now().plusDays(1L));
@@ -60,9 +58,8 @@ class BookingControllerIntegrationTest {
         assertEquals(objectMapper.writeValueAsString(bookingDto), result);
     }
 
-    @SneakyThrows
     @Test
-    void updateBooking() {
+    void updateBooking() throws Exception {
         Long       userId     = 0L;
         Long       id  = 0L;
         BookingDto bookingDto = new BookingDto();
@@ -85,9 +82,8 @@ class BookingControllerIntegrationTest {
         assertEquals(objectMapper.writeValueAsString(bookingDto), result);
     }
 
-    @SneakyThrows
     @Test
-    void getBookingById() {
+    void getBookingById() throws Exception {
         Long userId = 0L;
         Long id     = 0L;
         mockMvc
@@ -97,9 +93,8 @@ class BookingControllerIntegrationTest {
         verify(bookingService).findById(userId, id);
     }
 
-    @SneakyThrows
     @Test
-    void getBookings() {
+    void getBookings() throws Exception {
         Long userId = 0L;
         Long id     = 0L;
         mockMvc
@@ -110,9 +105,8 @@ class BookingControllerIntegrationTest {
         verify(bookingService).findAll(userId, "ALL", 0, 10, false);
     }
 
-    @SneakyThrows
     @Test
-    void getBookingsForOwner() {
+    void getBookingsForOwner() throws Exception {
         Long userId = 0L;
         Long id     = 0L;
         mockMvc

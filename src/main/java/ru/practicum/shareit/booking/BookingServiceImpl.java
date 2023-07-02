@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
@@ -29,9 +28,10 @@ import static ru.practicum.shareit.util.Util.checkForNull;
 @RequiredArgsConstructor
 @Slf4j
 public class BookingServiceImpl implements BookingService {
-    private final BookingRepository bookingRepository;
-    private final UserRepository    userRepository;
-    private final ItemRepository    itemRepository;
+    private final BookingRepository      bookingRepository;
+    private final UserRepository         userRepository;
+    private final ItemRepository itemRepository;
+    private final BookingMapper  bookingMapper;
 
     @Transactional
     @Override
@@ -46,7 +46,7 @@ public class BookingServiceImpl implements BookingService {
                 });
 
         Long itemId = entity.getItemId();
-        Item item = itemRepository.findByIdAndOwnerIdNot(itemId, userId);
+        Item item   = itemRepository.findByIdAndOwnerIdNot(itemId, userId);
 
         if (item == null) {
             throw new EntityNotFoundException(Item.class,
@@ -57,7 +57,7 @@ public class BookingServiceImpl implements BookingService {
             throw new BadInputDataException("Произошла непредвиденная ошибка.");
         }
 
-        return BookingMapper.toDto(bookingRepository.save(BookingMapper.toBooking(entity, item, user, Status.WAITING)));
+        return bookingMapper.toDto(bookingRepository.save(bookingMapper.toBooking(entity, item, user, Status.WAITING)));
     }
 
     @Transactional
@@ -75,7 +75,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         booking.setStatus(approved ? APPROVED : REJECTED);
-        return BookingMapper.toDto(booking);
+        return bookingMapper.toDto(booking);
     }
 
     @Transactional(readOnly = true)
@@ -92,7 +92,7 @@ public class BookingServiceImpl implements BookingService {
             throw new EntityNotFoundException(Booking.class,
                     String.format("Entity with id=%d doesn't exist.", id));
         }
-        return BookingMapper.toDto(result);
+        return bookingMapper.toDto(result);
     }
 
     @Transactional(readOnly = true)
@@ -105,9 +105,8 @@ public class BookingServiceImpl implements BookingService {
                             String.format("Entity with id=%d doesn't exist.", bookerId));
                 });
 
-        Page<Booking> result      = null;
-        Sort          sortByStart = Sort.by(Sort.Direction.DESC, "start");
-        PageRequest   page        = PageRequest.of(from > 0 ? from / size : 0, size, sortByStart);
+        Page<Booking> result = null;
+        PageRequest   page   = new BookingPageRequest(from, size);
 
         switch (State.valueOf(state)) {
             case ALL:
@@ -147,7 +146,7 @@ public class BookingServiceImpl implements BookingService {
         return result
                 .getContent()
                 .stream()
-                .map(BookingMapper::toDto)
+                .map(bookingMapper::toDto)
                 .collect(Collectors.toList());
     }
 }

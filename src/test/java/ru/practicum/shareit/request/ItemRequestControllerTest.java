@@ -8,7 +8,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -34,7 +34,7 @@ class ItemRequestControllerTest {
 
     @Test
     void getUsers() {
-        List<ItemRequestDto> expected = List.of(new ItemRequestDto(0L, "expected", Instant.now().toEpochMilli(), null));
+        List<ItemRequestDto> expected = List.of(new ItemRequestDto(0L, "expected", LocalDateTime.now(), null));
         Mockito
                 .when(itemRequestService.findAll(0L))
                 .thenReturn(expected);
