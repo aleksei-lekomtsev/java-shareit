@@ -15,7 +15,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.booking.dto.BookingDto;
 
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.Collection;
+import java.util.List;
 
 import static ru.practicum.shareit.util.Util.X_SHARER_USER_ID;
 
@@ -23,6 +26,7 @@ import static ru.practicum.shareit.util.Util.X_SHARER_USER_ID;
 @RestController
 @RequestMapping(path = "/bookings")
 @RequiredArgsConstructor
+@Validated
 public class BookingController {
     private final BookingService service;
 
@@ -44,16 +48,20 @@ public class BookingController {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public Collection<BookingDto> getBookings(@RequestHeader(X_SHARER_USER_ID) Long userId,
-                                              @RequestParam(name = "state", defaultValue = "ALL") String state) {
-        return service.findAll(userId, state);
+                                              @RequestParam(name = "state", defaultValue = "ALL") String state,
+                                              @RequestParam(name = "from", defaultValue = "0") @PositiveOrZero int from,
+                                              @RequestParam(name = "size", defaultValue = "10") @Positive int size) {
+        return service.findAll(userId, state, from, size, false);
     }
 
     @GetMapping("/owner")
     @ResponseStatus(HttpStatus.OK)
-    public Collection<BookingDto> getBookingsForOwner(@RequestHeader(X_SHARER_USER_ID) Long userId,
-                                                      @RequestParam(name = "state",
-                                                              defaultValue = "ALL") String state) {
-        return service.findAllForOwner(userId, state);
+    public List<BookingDto> getBookingsForOwner(@RequestHeader(X_SHARER_USER_ID) Long userId,
+                                                @RequestParam(name = "state", defaultValue = "ALL") String state,
+                                                @RequestParam(name = "from", defaultValue = "0")
+                                                @PositiveOrZero int from,
+                                                @RequestParam(name = "size", defaultValue = "10") @Positive int size) {
+        return service.findAll(userId, state, from, size, true);
     }
 
     @GetMapping("/{bookingId}")

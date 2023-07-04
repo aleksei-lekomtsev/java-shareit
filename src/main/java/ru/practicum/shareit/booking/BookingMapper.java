@@ -1,33 +1,21 @@
 package ru.practicum.shareit.booking;
 
-import lombok.experimental.UtilityClass;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.item.Item;
 import ru.practicum.shareit.user.User;
 
-@UtilityClass
-public class BookingMapper {
-    public Booking toBooking(BookingDto dto, Item item, User user, Status status) {
-        return new Booking(
-                dto.getId(),
-                dto.getStart(),
-                dto.getEnd(),
-                item,
-                user,
-                status
-        );
-    }
 
-    public BookingDto toDto(Booking booking) {
-        return new BookingDto(
-                booking.getId(),
-                booking.getItem().getId(),
-                booking.getStart(),
-                booking.getEnd(),
-                false,
-                booking.getStatus().name(),
-                booking.getBooker(),
-                booking.getItem()
-        );
-    }
+@Mapper(componentModel = "spring")
+public interface BookingMapper {
+    @Mapping(source = "dto.id", target = "id")
+    @Mapping(source = "item", target = "item")
+    @Mapping(source = "booker", target = "booker")
+    @Mapping(source = "status", target = "status")
+    Booking toBooking(BookingDto dto, Item item, User booker, Status status);
+
+    @Mapping(source = "booking.id", target = "id")
+    @Mapping(source = "booking.item.id", target = "itemId")
+    BookingDto toDto(Booking booking);
 }
