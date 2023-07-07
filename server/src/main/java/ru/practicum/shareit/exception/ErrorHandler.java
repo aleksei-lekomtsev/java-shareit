@@ -7,8 +7,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import javax.validation.ConstraintViolationException;
-
 
 @RestControllerAdvice
 @Slf4j
@@ -47,12 +45,5 @@ public class ErrorHandler {
     public ErrorResponse handleIllegalArgumentException(final IllegalArgumentException e) {
         log.warn("IllegalArgumentException: {} HTTP-code: {}", e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         return new ErrorResponse("Unknown state: UNSUPPORTED_STATUS");
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleValidationException(final ConstraintViolationException e) {
-        log.warn("ConstraintViolationException: {} HTTP-code: {}", e.getMessage(), HttpStatus.BAD_REQUEST);
-        return new ErrorResponse(e.getMessage());
     }
 }

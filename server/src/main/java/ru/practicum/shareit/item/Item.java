@@ -14,8 +14,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 
 @Data
 @NoArgsConstructor
@@ -29,15 +27,12 @@ public class Item {
     private Long id;
 
     @Column
-    @NotBlank
     private String name;
 
     @Column
-    @NotBlank
     private String description;
 
     @Column(name = "is_available")
-    @NotNull
     private Boolean available;
 
     @ManyToOne

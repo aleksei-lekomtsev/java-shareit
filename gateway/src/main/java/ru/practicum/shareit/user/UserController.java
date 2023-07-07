@@ -24,6 +24,7 @@ public class UserController {
     private final UserClient client;
 
     @GetMapping
+    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<Object> getUsers() {
         return client.findAll();
     }

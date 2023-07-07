@@ -12,8 +12,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 
 
 @Data
@@ -28,7 +26,6 @@ public class Comment {
     private Long id;
 
     @Column
-    @NotBlank
     private String text;
 
     @ManyToOne
@@ -39,6 +36,5 @@ public class Comment {
     private String authorName;
 
     @Column
-    @NotNull
     private Long created;
 }

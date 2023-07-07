@@ -13,8 +13,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 
@@ -30,7 +28,6 @@ public class ItemRequest {
     private Long id;
 
     @Column
-    @NotBlank
     private String description;
 
     @ManyToOne
@@ -38,6 +35,5 @@ public class ItemRequest {
     private User requestor;
 
     @Column
-    @NotNull
     private LocalDateTime created;
 }
