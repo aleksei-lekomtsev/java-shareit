@@ -62,26 +62,11 @@
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
-            <version>1.5.3.Final</version>
         </dependency>
-
-        <!--
-        > Дублирование зависимости
-        Если правильно понял комментарий, у меня mapstruct работает только когда 2 зависимости
-        - mapstruct и mapstruct-processor...
-        Если убрать mapstruct зависимость, то при сборке IDEA не видит например пакет org.mapstruct.Mapper
-        в интерфейсе UserMapper
-        Если убрать mapstruct-processor, то при сборке IDEA выдает ошибки например
-        java.lang.RuntimeException: java.lang.ClassNotFoundException:
-        Cannot find implementation for ru.practicum.shareit.booking.BookingMapper
-	    at ru.practicum.shareit.booking.BookingServiceImplTest.<init>(BookingServiceImplTest.java:52)
-        Т.е. папка с server/target/generated-sources/annotations - пустая, как будто мапперы не создаются...
-        -->
 
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct-processor</artifactId>
-            <version>1.5.3.Final</version>
         </dependency>
     </dependencies>
 

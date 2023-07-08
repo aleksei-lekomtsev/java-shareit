@@ -15,23 +15,13 @@ import org.springframework.web.client.RestTemplate;
 import static ru.practicum.shareit.util.Util.X_SHARER_USER_ID;
 
 public class BaseClient {
-    // Семен, привет!
-    // > Почему модификатор protected?
-    // BaseClient был в шаблоне из задания, то есть я его взял как есть
-    // Если правильно понимаю, думаю лучше сделать модификатор private,
-    // так как это поле используется только в BaseClient
+
     private final RestTemplate rest;
 
     public BaseClient(RestTemplate rest) {
         this.rest = rest;
     }
 
-    // > И почему здесь и далее у методов модификатор protected?
-    // Если правильно понимаю, BaseClient - некоторая "абстракция", её методы используем через
-    // классы - наследники, которые представляют "конкретный" клиент, например UserClient
-    // Поэтому public модификатор наверное по смыслу не очень подходит...
-    // С private, default модификаторами к методам не будет доступа из классов - наследников
-    // Поэтому думаю тут protected
     protected ResponseEntity<Object> get(String path) {
         return get(path, null, null);
     }
